@@ -1,0 +1,296 @@
+/* Global Styles */
+body {
+  font-family: "Roboto", sans-serif;
+  background-color: #f0f2f6;
+  color: #1e1e1e;
+}
+
+.stApp {
+  background-color: #ffffff;
+}
+
+/* Sidebar Styles */
+.sidebar .sidebar-content {
+  background-color: #2c3e50;
+  color: #ecf0f1;
+}
+
+.sidebar .sidebar-content .block-container {
+  padding-top: 2rem;
+}
+
+/* Main Content Styles */
+.main .block-container {
+  padding-top: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header Styles */
+h1,
+h2,
+h3 {
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+/* Button Styles */
+.stButton > button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.stButton > button:hover {
+  background-color: #2980b9;
+}
+
+/* File Uploader Styles */
+.stFileUploader {
+  background-color: #ecf0f1;
+  border: 2px dashed #bdc3c7;
+  border-radius: 4px;
+  padding: 1rem;
+}
+
+/* Result Card Styles - Updated */
+.result-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  border: 1px solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.result-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+.result-card h3 {
+  color: #2c3e50;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Category Badge - New */
+.category-badge {
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border-radius: 20px;
+  background-color: #f1f8e9;
+  color: #689f38;
+  font-weight: 500;
+  margin-left: 10px;
+}
+
+/* Nutrition Info Styles - New */
+.nutrition-info {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 15px;
+  border-left: 4px solid #3498db;
+}
+
+.nutrition-info h4 {
+  color: #2c3e50;
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.nutrition-info p {
+  margin: 8px 0;
+  color: #34495e;
+  font-size: 0.95rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nutrition-value {
+  font-weight: 500;
+  color: #3498db;
+  background-color: #edf7ff;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+/* Confidence Badge - New */
+.confidence-badge {
+  background-color: #2ecc71;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  display: inline-block;
+}
+
+/* Tabs Styling */
+.stTabs [data-baseweb="tab-list"] {
+  gap: 8px;
+}
+
+.stTabs [data-baseweb="tab"] {
+  height: 40px;
+  white-space: pre-wrap;
+  background-color: #f8f9fa;
+  border-radius: 4px 4px 0 0;
+  gap: 1px;
+  padding: 10px 16px;
+  font-weight: 500;
+}
+
+.stTabs [aria-selected="true"] {
+  background-color: #3498db !important;
+  color: white !important;
+}
+
+/* Daily Intake Styles - New */
+.daily-intake-container {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 15px;
+  border-left: 4px solid #f39c12;
+}
+
+.daily-intake-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 8px 0;
+}
+
+.daily-intake-label {
+  font-weight: 500;
+  color: #34495e;
+}
+
+.daily-intake-value {
+  font-weight: 500;
+  color: #f39c12;
+  background-color: #fff8e1;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+/* Category Filter Styles - New */
+.category-filter {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.category-filter-title {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+/* Contact Form Styles */
+form {
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+form input,
+form textarea {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  transition: border-color 0.3s ease;
+}
+
+form input:focus,
+form textarea:focus {
+  border-color: #3498db;
+  outline: none;
+}
+
+form button {
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+  width: 100%;
+}
+
+form button:hover {
+  background-color: #27ae60;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .main .block-container {
+    padding: 1rem;
+  }
+  
+  .result-card {
+    padding: 15px;
+  }
+  
+  .nutrition-info {
+    padding: 12px;
+  }
+}
+
+/* Condition Badge - New */
+.condition-badge {
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border-radius: 20px;
+  color: white;
+  font-weight: 500;
+  margin-left: 10px;
+}
+
+/* Condition Info Styles - New */
+.condition-info {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+.condition-info h4 {
+  color: #2c3e50;
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.condition-value {
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.condition-detail, .condition-confidence, .condition-recommendation {
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: #f5f5f5;
+}
+
