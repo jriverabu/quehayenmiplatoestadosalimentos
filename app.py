@@ -997,6 +997,8 @@ def process_image(img_file):
                             st.write("Si conoces la fecha de vencimiento, puedes ingresarla manualmente:")
                             
                             manual_date = st.date_input("Fecha de vencimiento", min_value=datetime.now() - pd.Timedelta(days=365))
+                            validate_with_image = st.checkbox("Validar con el estado visual del alimento", value=True, 
+                                                             help="Compara la fecha ingresada con el estado visual detectado en la imagen")
                             submit_button = st.form_submit_button("Guardar fecha manual")
                             
                             if submit_button:
@@ -1016,11 +1018,337 @@ def process_image(img_file):
                                     'timestamp': datetime.now().strftime("%d/%m/%Y %H:%M")
                                 }
                                 
+                                # Si se solicitó validación con estado visual
+                                if validate_with_image:
+                                    with st.spinner("Analizando el estado visual del alimento para validar la fecha..."):
+                                        # Crear mensaje para Gemini
+                                        validation_msg = ChatMessage(
+                                            role=MessageRole.USER,
+                                            blocks=[
+                                                TextBlock(text=f"""Analiza esta imagen de un alimento y determina si la fecha de vencimiento que ha ingresado el usuario ({manual_date_obj.strftime("%d/%m/%Y")}) es coherente con el estado visual del producto.
+                                                
+                                                Hoy es {today.strftime("%d/%m/%Y")}.
+                                                
+                                                Si la fecha ya pasó (producto vencido), verifica si el alimento muestra signos visuales de deterioro que confirmen que efectivamente está vencido.
+                                                
+                                                Si la fecha está en el futuro (producto no vencido), verifica si el estado visual del alimento confirma que todavía está en buen estado.
+                                                
+                                                Responde SOLO con un objeto JSON con el siguiente formato (sin texto adicional):
+                                                {{
+                                                  "coherente": true/false,
+                                                  "confianza": valor_entre_0_y_1,
+                                                  "explicacion": "explicación detallada de la coherencia o incoherencia",
+                                                  "recomendacion": "recomendación sobre qué hacer con el alimento"
+                                                }}"""),
+                                                ImageBlock(path=temp_filename, image_mimetype="image/jpeg"),
+                                            ],
+                                        )
+                                        
+                                        try:
+                                            # Obtener respuesta de Gemini
+                                            validation_response = gemini_pro.chat(messages=[validation_msg])
+                                            
+                                            # Procesar respuesta
+                                            validation_text = validation_response.message.content
+                                            
+                                            # Verificar si es texto JSON y extraerlo
+                                            json_match = re.search(r'(\{.*\})', validation_text, re.DOTALL)
+                                            if json_match:
+                                                json_str = json_match.group(1)
+                                                # Parsear JSON
+                                                validation_result = json.loads(json_str)
+                                                
+                                                # Agregar resultado a la información de fecha
+                                                manual_date_info['validation'] = validation_result
+                                                
+                                                # Mostrar resultado de validación
+                                                if validation_result['coherente']:
+                                                    st.success(f"✅ Fecha validada: La fecha ingresada es coherente con el estado visual del alimento ({int(validation_result['confianza']*100)}% de confianza)")
+                                                    st.info(f"**Explicación**: {validation_result['explicacion']}")
+                                                    st.info(f"**Recomendación**: {validation_result['recomendacion']}")
+                                                else:
+                                                    st.warning(f"⚠️ Posible inconsistencia: La fecha ingresada no parece coherente con el estado visual del alimento ({int(validation_result['confianza']*100)}% de confianza)")
+                                                    st.info(f"**Explicación**: {validation_result['explicacion']}")
+                                                    st.info(f"**Recomendación**: {validation_result['recomendacion']}")
+                                                    
+                                                    # Preguntar si aún desea guardar
+                                                    if st.button("Guardar de todos modos"):
+                                                        if 'fechas_guardadas' not in st.session_state:
+                                                            st.session_state.fechas_guardadas = []
+                                                        st.session_state.fechas_guardadas.append(manual_date_info)
+                                                        st.success("✅ Fecha manual guardada correctamente (con advertencia de inconsistencia)")
+                                                    return
+                                            else:
+                                                st.warning("No se pudo validar la fecha con el estado visual del alimento. Se guardará sin validación.")
+                                        
+                                        except Exception as e:
+                                            st.warning(f"Error al validar fecha: {str(e)}. Se guardará sin validación.")
+                                
+                                # Guardar la fecha en la sesión
                                 if 'fechas_guardadas' not in st.session_state:
                                     st.session_state.fechas_guardadas = []
                                 
                                 st.session_state.fechas_guardadas.append(manual_date_info)
                                 st.success("✅ Fecha manual guardada correctamente")
+                
+                # Agregar nueva pestaña para capturar solo la fecha de vencimiento
+                st.markdown("---")
+                st.subheader("Captura específica de fecha de vencimiento")
+                st.write("Toma una foto solo de la sección donde aparece la fecha de vencimiento para un reconocimiento más preciso")
+                
+                # Opciones de captura
+                date_capture_option = st.radio(
+                    "Selecciona una opción:",
+                    ["Subir imagen de la fecha", "Tomar foto de la fecha"],
+                    horizontal=True
+                )
+                
+                date_image = None
+                
+                if date_capture_option == "Subir imagen de la fecha":
+                    date_image = st.file_uploader("Sube una imagen de la fecha de vencimiento", type=["jpg", "jpeg", "png"], key="date_uploader")
+                else:
+                    date_image = st.camera_input("Toma una foto de la fecha de vencimiento", key="date_camera")
+                
+                if date_image is not None:
+                    # Mostrar imagen
+                    st.image(date_image, caption="Imagen de fecha de vencimiento", use_container_width=True)
+                    
+                    # Opciones para mejorar reconocimiento
+                    st.write("Opciones de mejora para el reconocimiento:")
+                    
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        enhance_date = st.checkbox("Mejorar contraste", value=True)
+                    with col2:
+                        invert_colors = st.checkbox("Invertir colores", value=False)
+                    with col3:
+                        grayscale = st.checkbox("Escala de grises", value=True)
+                    
+                    # Botón para procesar
+                    if st.button("🔍 Detectar fecha de esta imagen", key="process_date_only"):
+                        with st.spinner("Procesando imagen para detectar fecha..."):
+                            # Guardar imagen en archivo temporal
+                            with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as temp_file:
+                                temp_date_filename = temp_file.name
+                                temp_file.write(date_image.getvalue())
+                            
+                            try:
+                                # Leer y procesar la imagen con OpenCV
+                                date_img = cv2.imread(temp_date_filename)
+                                
+                                # Aplicar mejoras según las opciones seleccionadas
+                                if grayscale:
+                                    date_img = cv2.cvtColor(date_img, cv2.COLOR_BGR2GRAY)
+                                
+                                if enhance_date:
+                                    # Aplicar ecualización de histograma
+                                    if len(date_img.shape) == 2:  # Si es escala de grises
+                                        date_img = cv2.equalizeHist(date_img)
+                                    else:  # Si es a color
+                                        lab = cv2.cvtColor(date_img, cv2.COLOR_BGR2LAB)
+                                        l, a, b = cv2.split(lab)
+                                        l = cv2.equalizeHist(l)
+                                        lab = cv2.merge((l, a, b))
+                                        date_img = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+                                
+                                if invert_colors:
+                                    date_img = cv2.bitwise_not(date_img)
+                                
+                                # Guardar imagen procesada
+                                processed_path = temp_date_filename + "_processed.jpg"
+                                cv2.imwrite(processed_path, date_img)
+                                
+                                # Mostrar imagen procesada
+                                processed_img = cv2.imread(processed_path)
+                                processed_img_rgb = cv2.cvtColor(processed_img, cv2.COLOR_BGR2RGB)
+                                st.image(processed_img_rgb, caption="Imagen procesada", use_container_width=True)
+                                
+                                # Intentar con Tesseract
+                                date_results = []
+                                
+                                if use_tesseract:
+                                    try:
+                                        # Aplicar OCR
+                                        ocr_text = pytesseract.image_to_string(date_img)
+                                        
+                                        # Buscar patrones de fecha
+                                        patterns = [
+                                            r'(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})',  # DD/MM/YYYY o MM/DD/YYYY
+                                            r'(\d{2,4}[/-]\d{1,2}[/-]\d{1,2})',  # YYYY/MM/DD
+                                            r'venc[a-zA-Z]*:?\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})',  # Vence: DD/MM/YYYY
+                                            r'exp[a-zA-Z]*:?\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})',   # EXP: DD/MM/YYYY
+                                            r'cad[a-zA-Z]*:?\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})',   # Caducidad: DD/MM/YYYY
+                                            r'consumir antes de:?\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})', # Consumir antes de: DD/MM/YYYY
+                                            r'prefer[a-zA-Z]*:?\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})',   # Preferente: DD/MM/YYYY
+                                            r'best before:?\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})'       # Best before: DD/MM/YYYY
+                                        ]
+                                        
+                                        for pattern in patterns:
+                                            matches = re.findall(pattern, ocr_text, re.IGNORECASE)
+                                            if matches:
+                                                for match in matches:
+                                                    date_results.append({
+                                                        'date_str': match,
+                                                        'source': 'OCR (Tesseract)',
+                                                        'confidence': 0.85
+                                                    })
+                                        
+                                        if 'show_debug' in st.session_state and st.session_state.show_debug:
+                                            st.text("Texto OCR detectado:")
+                                            st.code(ocr_text)
+                                    
+                                    except Exception as e:
+                                        if 'show_debug' in st.session_state and st.session_state.show_debug:
+                                            st.error(f"Error en OCR: {str(e)}")
+                                
+                                # Intentar con Gemini
+                                if use_ai:
+                                    try:
+                                        # Crear mensaje para Gemini
+                                        date_detection_msg = ChatMessage(
+                                            role=MessageRole.USER,
+                                            blocks=[
+                                                TextBlock(text="""Esta imagen contiene SOLO una fecha de vencimiento o caducidad de un producto alimenticio.
+                                                
+                                                Extrae la fecha en formato DD/MM/YYYY. Si la fecha está en otro formato, conviértela.
+                                                
+                                                Responde SOLO con un objeto JSON con el siguiente formato (sin texto adicional):
+                                                {
+                                                  "detected": true/false,
+                                                  "date": "DD/MM/YYYY",
+                                                  "confidence": valor_entre_0_y_1,
+                                                  "original_text": "texto exacto como aparece en la imagen"
+                                                }"""),
+                                                ImageBlock(path=processed_path, image_mimetype="image/jpeg"),
+                                            ],
+                                        )
+                                        
+                                        # Obtener respuesta de Gemini
+                                        date_response = gemini_pro.chat(messages=[date_detection_msg])
+                                        
+                                        # Procesar respuesta
+                                        date_text = date_response.message.content
+                                        
+                                        if 'show_debug' in st.session_state and st.session_state.show_debug:
+                                            st.text("Respuesta de Gemini:")
+                                            st.code(date_text)
+                                        
+                                        # Verificar si es texto JSON y extraerlo
+                                        json_match = re.search(r'(\{.*\})', date_text, re.DOTALL)
+                                        if json_match:
+                                            json_str = json_match.group(1)
+                                            # Parsear JSON
+                                            date_result = json.loads(json_str)
+                                            
+                                            if date_result.get('detected', False):
+                                                date_results.append({
+                                                    'date_str': date_result.get('date', ''),
+                                                    'source': 'AI (Gemini)',
+                                                    'confidence': date_result.get('confidence', 0.5),
+                                                    'original_text': date_result.get('original_text', '')
+                                                })
+                                    
+                                    except Exception as e:
+                                        if 'show_debug' in st.session_state and st.session_state.show_debug:
+                                            st.error(f"Error con Gemini: {str(e)}")
+                                
+                                # Mostrar resultados
+                                if date_results:
+                                    st.success(f"Se han detectado {len(date_results)} posibles fechas")
+                                    
+                                    for i, result in enumerate(date_results):
+                                        # Intentar parsear la fecha
+                                        try:
+                                            # Intentar varios formatos
+                                            formats = ["%d/%m/%Y", "%d-%m-%Y", "%m/%d/%Y", "%m-%d-%Y", "%Y/%m/%d", "%Y-%m-%d"]
+                                            parsed_date = None
+                                            
+                                            for fmt in formats:
+                                                try:
+                                                    parsed_date = datetime.strptime(result['date_str'], fmt)
+                                                    break
+                                                except:
+                                                    continue
+                                            
+                                            if parsed_date:
+                                                # Calcular días restantes
+                                                days_remaining = (parsed_date - datetime.now()).days
+                                                is_expired = days_remaining < 0
+                                                
+                                                # Actualizar objeto con información adicional
+                                                result['parsed_date'] = parsed_date
+                                                result['days_remaining'] = days_remaining
+                                                result['is_expired'] = is_expired
+                                                
+                                                # Determinar estado y estilo
+                                                if is_expired:
+                                                    status = "VENCIDO"
+                                                    badge_color = "#e74c3c"
+                                                    days_text = f"Vencido hace {abs(days_remaining)} días"
+                                                elif days_remaining < 7:
+                                                    status = "PRÓXIMO A VENCER"
+                                                    badge_color = "#f39c12"
+                                                    days_text = f"Vence en {days_remaining} días"
+                                                else:
+                                                    status = "VIGENTE"
+                                                    badge_color = "#2ecc71"
+                                                    days_text = f"Vigente por {days_remaining} días más"
+                                                
+                                                # Mostrar resultado con un diseño mejorado
+                                                st.markdown(f"""
+                                                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 5px solid {badge_color};">
+                                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                        <div>
+                                                            <h3 style="margin: 0; color: #2c3e50;">Fecha: {parsed_date.strftime('%d/%m/%Y')}</h3>
+                                                            <p style="margin: 5px 0; color: #7f8c8d;">Texto original: {result.get('original_text', result['date_str'])}</p>
+                                                            <p style="margin: 5px 0;">Fuente: <span style="font-weight: 500;">{result['source']}</span> (Confianza: {int(result['confidence']*100)}%)</p>
+                                                        </div>
+                                                        <div style="background-color: {badge_color}; color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold;">
+                                                            {status}
+                                                        </div>
+                                                    </div>
+                                                    <p style="margin: 10px 0; font-size: 1.1em;">{days_text}</p>
+                                                </div>
+                                                """, unsafe_allow_html=True)
+                                                
+                                                # Botón funcional de Streamlit
+                                                if st.button(f"💾 Guardar esta fecha", key=f"save_specific_date_{i}"):
+                                                    # Crear objeto para guardar
+                                                    date_to_save = result.copy()
+                                                    date_to_save['timestamp'] = datetime.now().strftime("%d/%m/%Y %H:%M")
+                                                    date_to_save['from_specific_capture'] = True
+                                                    
+                                                    # Guardar en estado de sesión
+                                                    if 'fechas_guardadas' not in st.session_state:
+                                                        st.session_state.fechas_guardadas = []
+                                                    
+                                                    st.session_state.fechas_guardadas.append(date_to_save)
+                                                    st.success(f"✅ Fecha guardada correctamente")
+                                            else:
+                                                st.warning(f"No se pudo interpretar la fecha: {result['date_str']}")
+                                        
+                                        except Exception as e:
+                                            st.warning(f"Error al procesar la fecha {result['date_str']}: {str(e)}")
+                                
+                                else:
+                                    st.warning("No se detectaron fechas en la imagen")
+                                    # Sugerir probar con otras configuraciones
+                                    st.markdown("""
+                                    **Sugerencias:**
+                                    - Intenta con otra imagen más clara de la fecha
+                                    - Prueba diferentes combinaciones de mejoras de imagen (contraste, escala de grises, etc.)
+                                    - Asegúrate de que la fecha sea legible en la imagen
+                                    """)
+                            
+                            finally:
+                                # Limpiar archivos temporales
+                                try:
+                                    os.unlink(temp_date_filename)
+                                    if os.path.exists(processed_path):
+                                        os.unlink(processed_path)
+                                except:
+                                    pass
         
         with analysis_tabs[2]:
             st.subheader("Análisis del Estado del Alimento")
@@ -1560,6 +1888,9 @@ def contact_page():
 
 if __name__ == "__main__":
     main()
+
+
+
 
 
 
