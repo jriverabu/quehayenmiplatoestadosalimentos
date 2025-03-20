@@ -1350,7 +1350,7 @@ def process_image(img_file):
                                 except:
                                     pass
         
-               with analysis_tabs[2]:
+            with analysis_tabs[2]:
             st.subheader("Análisis del Estado del Alimento")
             
             # Añadir opción para detectar si el alimento está crudo
