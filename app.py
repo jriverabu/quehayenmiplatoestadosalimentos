@@ -1371,6 +1371,7 @@ def process_image(img_file):
                             2. Evalúa su estado (Excelente, Bueno, Regular o Deteriorado)
                             3. Describe brevemente los detalles visuales que indican su estado
                             4. Proporciona recomendaciones sobre su consumo
+                            """
 
                             # Añadir instrucciones para detectar nivel de cocción si está activado
                     if cooking_status:
