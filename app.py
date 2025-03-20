@@ -1509,7 +1509,7 @@ def process_image(img_file):
                                     """, unsafe_allow_html=True)
                                     
                                     # Añadir botón para instrucciones específicas
-                                    if st.button(f"📋 Ver guía para {item['alimento']}", key=f"guide_{item['alimento']}"):
+                                if st.button(f"📋 Ver guía para {item['alimento']}", key=f"guide_{item['alimento']}"):
                                         st.info(f"Mostrando información detallada para {item['alimento']}...")
                                         # Aquí se podrían mostrar instrucciones específicas
                                 
