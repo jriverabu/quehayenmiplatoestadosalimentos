@@ -1,20 +1,20 @@
- import streamlit as st
- import cv2
- import numpy as np
- import tempfile
- from llama_index.llms.gemini import Gemini
- from llama_index.core.llms import ChatMessage, ImageBlock, MessageRole, TextBlock
- import re
- import os
- import base64
- from PIL import Image
- import io
- # import matplotlib.pyplot as plt  # Comentamos esta línea para evitar el error
- import pandas as pd
- import json
- from datetime import datetime
- import uuid
- import altair as alt
+import streamlit as st
+import cv2
+import numpy as np
+import tempfile
+from llama_index.llms.gemini import Gemini
+from llama_index.core.llms import ChatMessage, ImageBlock, MessageRole, TextBlock
+import re
+import os
+import base64
+from PIL import Image
+import io
+# import matplotlib.pyplot as plt  # Comentamos esta línea para evitar el error
+import pandas as pd
+import json
+from datetime import datetime
+import uuid
+import altair as alt
  
  # Intentar importar pytesseract, pero manejar caso cuando no está instalado
  try:
