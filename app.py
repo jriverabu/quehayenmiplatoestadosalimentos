@@ -1375,7 +1375,7 @@ def process_image(img_file):
                     5. Determina el nivel de cocción (Crudo, Parcialmente cocinado, Completamente cocinado)
                     6. Indica si es seguro consumirlo en su nivel actual de cocción
                         """    
-                         prompt_text += """   
+                    prompt_text += """   
                             Responde SOLO con un objeto JSON con el siguiente formato (sin texto adicional):
                             [
                               {
