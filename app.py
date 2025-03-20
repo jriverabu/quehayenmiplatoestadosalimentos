@@ -1387,11 +1387,11 @@ def process_image(img_file):
                     
                     # Añadir campos adicionales para el nivel de cocción
                     if cooking_status:
-                            prompt_text += """,
-                            "nivel_coccion": "Crudo/Parcialmente cocinado/Completamente cocinado",
-                            "seguro_consumo": true/false,
-                            "tiempo_coccion_recomendado": "tiempo adicional recomendado (solo si aplica)"
-                            """
+                        prompt_text += """,
+                        "nivel_coccion": "Crudo/Parcialmente cocinado/Completamente cocinado",
+                        "seguro_consumo": true/false,
+                        "tiempo_coccion_recomendado": "tiempo adicional recomendado (solo si aplica)"
+                        """
                             prompt_text += """
                               },
                               ...
