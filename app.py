@@ -528,7 +528,7 @@ def home_page():
         
         if uploaded_file is not None:
             process_image(uploaded_file)
-        else:
+            else:
             img_file_buffer = st.camera_input("Toma una foto")
             if img_file_buffer is not None:
                 process_image(img_file_buffer)
