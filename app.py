@@ -1350,36 +1350,62 @@ def process_image(img_file):
                                 except:
                                     pass
         
-        with analysis_tabs[2]:
+               with analysis_tabs[2]:
             st.subheader("Análisis del Estado del Alimento")
+            
+            # Añadir opción para detectar si el alimento está crudo
+            cooking_status = st.checkbox("Detectar nivel de cocción del alimento", value=True,
+                                       help="Determina si el alimento está crudo, parcialmente cocinado o totalmente cocinado")
             
             with st.spinner("Analizando estado del alimento..."):
                 st.info("Procesando imagen para evaluar el estado y calidad del alimento...")
                 
                 # Implementar análisis real del estado con Gemini
                 try:
+                    # Modificar el mensaje para incluir análisis de cocción si está activado
+                    prompt_text = """Analiza esta imagen de comida y evalúa el estado y calidad de cada alimento visible.
+                    Para cada alimento:
+                    1. Identifica su nombre
+                    2. Evalúa su estado (Excelente, Bueno, Regular o Deteriorado)
+                    3. Describe brevemente los detalles visuales que indican su estado
+                    4. Proporciona recomendaciones sobre su consumo
+                    """
+                    
+                    # Añadir instrucciones para detectar nivel de cocción si está activado
+                    if cooking_status:
+                        prompt_text += """
+                    5. Determina el nivel de cocción (Crudo, Parcialmente cocinado, Completamente cocinado)
+                    6. Indica si es seguro consumirlo en su nivel actual de cocción
+                        """
+                    
+                    prompt_text += """
+                    Responde SOLO con un objeto JSON con el siguiente formato (sin texto adicional):
+                    [
+                      {
+                        "alimento": "nombre_del_alimento",
+                        "estado": "Excelente/Bueno/Regular/Deteriorado",
+                        "detalles": "descripción_detallada_visual",
+                        "confianza": valor_entre_0_y_1,
+                        "recomendaciones": "recomendación_sobre_consumo" """
+                    
+                    # Añadir campos adicionales para el nivel de cocción
+                    if cooking_status:
+                        prompt_text += """,
+                        "nivel_coccion": "Crudo/Parcialmente cocinado/Completamente cocinado",
+                        "seguro_consumo": true/false,
+                        "tiempo_coccion_recomendado": "tiempo adicional recomendado (solo si aplica)"
+                        """
+                    
+                    prompt_text += """
+                      },
+                      ...
+                    ]"""
+                    
                     # Crear mensaje para Gemini
                     food_condition_msg = ChatMessage(
                         role=MessageRole.USER,
                         blocks=[
-                            TextBlock(text="""Analiza esta imagen de comida y evalúa el estado y calidad de cada alimento visible.
-                            Para cada alimento:
-                            1. Identifica su nombre
-                            2. Evalúa su estado (Excelente, Bueno, Regular o Deteriorado)
-                            3. Describe brevemente los detalles visuales que indican su estado
-                            4. Proporciona recomendaciones sobre su consumo
-                            
-                            Responde SOLO con un objeto JSON con el siguiente formato (sin texto adicional):
-                            [
-                              {
-                                "alimento": "nombre_del_alimento",
-                                "estado": "Excelente/Bueno/Regular/Deteriorado",
-                                "detalles": "descripción_detallada_visual",
-                                "confianza": valor_entre_0_y_1,
-                                "recomendaciones": "recomendación_sobre_consumo"
-                              },
-                              ...
-                            ]"""),
+                            TextBlock(text=prompt_text),
                             ImageBlock(path=temp_filename, image_mimetype="image/jpeg"),
                         ],
                     )
@@ -1430,6 +1456,42 @@ def process_image(img_file):
                                 
                                 with col1:
                                     # Panel de resumen
+                                    cooking_status_html = ""
+                                    if cooking_status and "nivel_coccion" in item:
+                                        # Determinar color para nivel de cocción
+                                        if item["nivel_coccion"] == "Crudo":
+                                            cooking_color = "#F44336"  # Rojo
+                                            cooking_icon = "🥩"
+                                        elif item["nivel_coccion"] == "Parcialmente cocinado":
+                                            cooking_color = "#FF9800"  # Naranja
+                                            cooking_icon = "🔥"
+                                        else:  # Completamente cocinado
+                                            cooking_color = "#4CAF50"  # Verde
+                                            cooking_icon = "👨‍🍳"
+                                        
+                                        # Mostrar seguridad de consumo
+                                        safe_text = "Seguro para consumo" if item.get("seguro_consumo", False) else "No seguro para consumo"
+                                        safe_color = "#4CAF50" if item.get("seguro_consumo", False) else "#F44336"
+                                        
+                                        cooking_status_html = f"""
+                                        <div style="margin-top: 15px; padding: 12px; border-radius: 8px; background-color: rgba({int(cooking_color[1:3], 16)}, {int(cooking_color[3:5], 16)}, {int(cooking_color[5:7], 16)}, 0.1); border: 1px solid {cooking_color};">
+                                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                                <span style="font-size: 1.5em; margin-right: 8px;">{cooking_icon}</span>
+                                                <span style="font-weight: 600; color: {cooking_color};">{item["nivel_coccion"]}</span>
+                                            </div>
+                                            <div style="margin-top: 5px; padding: 5px 10px; background-color: {safe_color}; color: white; border-radius: 20px; text-align: center; font-size: 0.85em;">
+                                                {safe_text}
+                                            </div>
+                                        </div>
+                                        """
+                                        
+                                        if "tiempo_coccion_recomendado" in item and item["nivel_coccion"] != "Completamente cocinado":
+                                            cooking_status_html += f"""
+                                            <div style="margin-top: 10px; font-size: 0.9em;">
+                                                <strong>Tiempo adicional:</strong> {item["tiempo_coccion_recomendado"]}
+                                            </div>
+                                            """
+                                    
                                     st.markdown(f"""
                                     <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 5px solid {color};">
                                         <h2 style="color: #2c3e50; margin-bottom: 10px;">{item['alimento']}</h2>
@@ -1443,6 +1505,7 @@ def process_image(img_file):
                                         </div>
                                         <p style="margin-top: 10px; font-weight: 500;">Nivel de seguridad: <span style="color: {color}; font-weight: 600;">{safety_level}</span></p>
                                         <p style="margin-top: 10px; font-weight: 500;">Confianza: <span style="color: #3498db; font-weight: 600;">{int(float(item['confianza'])*100)}%</span></p>
+                                        {cooking_status_html}
                                     </div>
                                     """, unsafe_allow_html=True)
                                     
@@ -1542,6 +1605,69 @@ def process_image(img_file):
                                             """
                                         
                                         st.markdown(f"{analysis_text}", unsafe_allow_html=True)
+                                        
+                                        # Añadir análisis de nivel de cocción si está activado
+                                        if cooking_status and "nivel_coccion" in item:
+                                            st.markdown(f"""
+                                            <h4 style="color: #2c3e50; margin-top: 20px; border-bottom: 2px solid {color}; padding-bottom: 8px;">Análisis de Cocción</h4>
+                                            """, unsafe_allow_html=True)
+                                            
+                                            # Determinar texto de análisis según nivel de cocción
+                                            cooking_analysis = ""
+                                            
+                                            if item["nivel_coccion"] == "Crudo":
+                                                cooking_analysis = f"""
+                                                <div style="background-color: rgba(244, 67, 54, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #F44336; margin-top: 10px;">
+                                                    <p style="margin: 0 0 10px 0; font-weight: 500; color: #d32f2f;">El alimento está <strong>crudo</strong></p>
+                                                    <ul style="line-height: 1.6; margin-bottom: 0;">
+                                                        <li><strong>Características visuales:</strong> {item['alimento']} presenta colores y texturas propias de un estado crudo</li>
+                                                        <li><strong>Riesgos potenciales:</strong> Posible presencia de bacterias patógenas como E. coli, Salmonella o parásitos</li>
+                                                        <li><strong>Precauciones:</strong> No se recomienda consumir en este estado, especialmente si se trata de carne, ave, pescado o huevos</li>
+                                                        <li><strong>Tiempo de cocción recomendado:</strong> {item.get('tiempo_coccion_recomendado', 'Requiere cocción completa antes de consumir')}</li>
+                                                    </ul>
+                                                </div>
+                                                """
+                                            elif item["nivel_coccion"] == "Parcialmente cocinado":
+                                                cooking_analysis = f"""
+                                                <div style="background-color: rgba(255, 152, 0, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #FF9800; margin-top: 10px;">
+                                                    <p style="margin: 0 0 10px 0; font-weight: 500; color: #e65100;">El alimento está <strong>parcialmente cocinado</strong></p>
+                                                    <ul style="line-height: 1.6; margin-bottom: 0;">
+                                                        <li><strong>Características visuales:</strong> {item['alimento']} muestra signos de cocción pero no está completamente cocinado</li>
+                                                        <li><strong>Riesgos potenciales:</strong> Puede contener bacterias en el centro o partes menos cocinadas</li>
+                                                        <li><strong>Precauciones:</strong> Verificar que alcance la temperatura interna segura antes de consumir</li>
+                                                        <li><strong>Tiempo de cocción adicional:</strong> {item.get('tiempo_coccion_recomendado', 'Requiere cocción adicional antes de consumir')}</li>
+                                                    </ul>
+                                                </div>
+                                                """
+                                            else:  # Completamente cocinado
+                                                cooking_analysis = f"""
+                                                <div style="background-color: rgba(76, 175, 80, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #4CAF50; margin-top: 10px;">
+                                                    <p style="margin: 0 0 10px 0; font-weight: 500; color: #2e7d32;">El alimento está <strong>completamente cocinado</strong></p>
+                                                    <ul style="line-height: 1.6; margin-bottom: 0;">
+                                                        <li><strong>Características visuales:</strong> {item['alimento']} presenta signos claros de cocción completa</li>
+                                                        <li><strong>Seguridad alimentaria:</strong> El nivel de cocción es adecuado para eliminar la mayoría de los patógenos</li>
+                                                        <li><strong>Beneficios:</strong> Mejor digestibilidad, sabor y textura desarrollados apropiadamente</li>
+                                                        <li><strong>Recomendación:</strong> Apto para consumo inmediato</li>
+                                                    </ul>
+                                                </div>
+                                                """
+                                            
+                                            st.markdown(cooking_analysis, unsafe_allow_html=True)
+                                            
+                                            # Añadir temperaturas seguras de referencia para diferentes alimentos
+                                            if item["nivel_coccion"] != "Completamente cocinado":
+                                                st.markdown(f"""
+                                                <div style="margin-top: 15px;">
+                                                    <h5 style="color: #2c3e50;">Temperaturas internas seguras de referencia:</h5>
+                                                    <ul style="line-height: 1.6;">
+                                                        <li><strong>Aves (pollo, pavo):</strong> 74°C (165°F)</li>
+                                                        <li><strong>Carne molida:</strong> 71°C (160°F)</li>
+                                                        <li><strong>Cerdo:</strong> 63°C (145°F) con 3 minutos de reposo</li>
+                                                        <li><strong>Carne de res (filetes, asados):</strong> 63°C (145°F) con 3 minutos de reposo</li>
+                                                        <li><strong>Pescado:</strong> 63°C (145°F) o hasta que la carne esté opaca y se separe fácilmente</li>
+                                                    </ul>
+                                                </div>
+                                                """, unsafe_allow_html=True)
                                     
                                     with condition_tabs[2]:
                                         st.markdown(f"""
@@ -1550,6 +1676,77 @@ def process_image(img_file):
                                             <p style="font-weight: 500;">{item['recomendaciones']}</p>
                                         </div>
                                         """, unsafe_allow_html=True)
+                                        
+                                        # Añadir recomendaciones específicas de cocción si está activado
+                                        if cooking_status and "nivel_coccion" in item:
+                                            cooking_level = item["nivel_coccion"]
+                                            is_safe = item.get("seguro_consumo", False)
+                                            
+                                            st.markdown(f"""
+                                            <h4 style="color: #2c3e50; margin-top: 20px; border-bottom: 2px solid {color}; padding-bottom: 8px;">Recomendaciones de Cocción</h4>
+                                            """, unsafe_allow_html=True)
+                                            
+                                            if cooking_level == "Crudo":
+                                                st.error("⚠️ **IMPORTANTE**: Este alimento está crudo y requiere cocción antes de consumirse.")
+                                                
+                                                if "tiempo_coccion_recomendado" in item:
+                                                    st.info(f"**Tiempo de cocción recomendado**: {item['tiempo_coccion_recomendado']}")
+                                                
+                                                # Recomendaciones específicas según tipo de alimento
+                                                food_type = item['alimento'].lower()
+                                                if any(meat in food_type for meat in ["pollo", "pavo", "ave"]):
+                    st.markdown("""
+                                                    **Recomendaciones para aves:**
+                                                    - Cocinar hasta que la temperatura interna alcance 74°C (165°F)
+                                                    - Verificar que no haya partes rosadas en el centro
+                                                    - Los jugos deben ser claros, no rosados
+                                                    - Evitar la contaminación cruzada limpiando superficies y utensilios
+                                                    """)
+                                                elif any(meat in food_type for meat in ["res", "ternera", "steak", "filete"]):
+                    st.markdown("""
+                                                    **Recomendaciones para carne de res:**
+                                                    - Temperatura mínima recomendada: 63°C (145°F) con 3 minutos de reposo
+                                                    - Para términos específicos:
+                                                      - Término medio: 63-65°C (145-150°F)
+                                                      - Tres cuartos: 66-70°C (150-160°F)
+                                                      - Bien cocido: +71°C (+160°F)
+                                                    """)
+                                                elif any(fish in food_type for fish in ["pescado", "atún", "salmón", "pez"]):
+                    st.markdown("""
+                                                    **Recomendaciones para pescado:**
+                                                    - Cocinar hasta 63°C (145°F) o hasta que la carne esté opaca y se separe fácilmente
+                                                    - Si desea consumirlo crudo, asegúrese de que sea apto para consumo crudo y haya sido previamente congelado para eliminar parásitos
+                                                    """)
+                                                else:
+                    st.markdown("""
+                                                    **Recomendaciones generales:**
+                                                    - Cocinar completamente antes de consumir
+                                                    - Utilizar termómetro para alimentos para verificar la temperatura interna
+                                                    - Mantener separados los alimentos crudos de los cocinados
+                                                    """)
+                                                
+                                            elif cooking_level == "Parcialmente cocinado":
+                                                st.warning("⚠️ Este alimento está parcialmente cocinado y puede requerir cocción adicional.")
+                                                
+                                                if "tiempo_coccion_recomendado" in item:
+                                                    st.info(f"**Tiempo de cocción adicional recomendado**: {item['tiempo_coccion_recomendado']}")
+                                                
+                    st.markdown("""
+                                                **Pasos recomendados:**
+                                                1. Continuar la cocción hasta alcanzar la temperatura interna segura
+                                                2. Verificar el centro del alimento para asegurarse de que esté completamente cocinado
+                                                3. No interrumpir el proceso de cocción durante demasiado tiempo
+                                                """)
+                                                
+                                            else:  # Completamente cocinado
+                                                st.success("✅ Este alimento está completamente cocinado y listo para consumir.")
+                                                
+                    st.markdown("""
+                                                **Recomendaciones:**
+                                                - Mantener caliente (por encima de 60°C/140°F) si no se va a consumir inmediatamente
+                                                - Refrigerar dentro de las 2 horas de cocción si se va a almacenar
+                                                - Recalentar a 74°C (165°F) si se ha refrigerado
+                                                """)
                                         
                                         # Añadir recomendaciones adicionales basadas en el estado
                                         st.markdown("#### Acciones recomendadas")
@@ -1717,25 +1914,25 @@ def contact_page():
     tabs = st.tabs(["Historial de Análisis", "Historial de Fechas", "Contacto", "Recursos"])
     
     with tabs[0]:
-        # Mostrar historial de análisis si existe
-        if 'historial_analisis' in st.session_state and st.session_state.historial_analisis:
-            st.subheader("Historial de Análisis")
-            
-            for i, analisis in enumerate(st.session_state.historial_analisis):
-                with st.expander(f"Análisis #{i+1} - {analisis['date']}"):
-                    st.write(f"ID: {analisis['id']}")
-                    st.write(f"Total calorías: {analisis['total_calories']} kcal")
-                    
-                    # Crear tabla de alimentos
-                    items_df = pd.DataFrame([{
-                        "Alimento": item["name"],
-                        "Calorías": item["nutrition"].get("total_calories", 0),
-                        "Proteínas (g)": item["nutrition"].get("protein_g", 0),
-                        "Carbohidratos (g)": item["nutrition"].get("carbs_g", 0),
-                        "Grasas (g)": item["nutrition"].get("fat_g", 0)
-                    } for item in analisis["items"]])
-                    
-                    st.dataframe(items_df)
+    # Mostrar historial de análisis si existe
+    if 'historial_analisis' in st.session_state and st.session_state.historial_analisis:
+        st.subheader("Historial de Análisis")
+        
+        for i, analisis in enumerate(st.session_state.historial_analisis):
+            with st.expander(f"Análisis #{i+1} - {analisis['date']}"):
+                st.write(f"ID: {analisis['id']}")
+                st.write(f"Total calorías: {analisis['total_calories']} kcal")
+                
+                # Crear tabla de alimentos
+                items_df = pd.DataFrame([{
+                    "Alimento": item["name"],
+                    "Calorías": item["nutrition"].get("total_calories", 0),
+                    "Proteínas (g)": item["nutrition"].get("protein_g", 0),
+                    "Carbohidratos (g)": item["nutrition"].get("carbs_g", 0),
+                    "Grasas (g)": item["nutrition"].get("fat_g", 0)
+                } for item in analisis["items"]])
+                
+                st.dataframe(items_df)
         else:
             st.info("No hay análisis guardados todavía. Analiza alimentos en la herramienta principal y guarda los resultados para verlos aquí.")
     
@@ -1888,8 +2085,3 @@ def contact_page():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
