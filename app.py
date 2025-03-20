@@ -4,6 +4,7 @@ import numpy as np
 import tempfile
 from llama_index.llms.gemini import Gemini
 from llama_index.core.llms import ChatMessage, ImageBlock, MessageRole, TextBlock
+from cooking_analysis import analyze_cooking_status
 import re
 import os
 import base64
@@ -1352,6 +1353,7 @@ def process_image(img_file):
         
         with analysis_tabs[2]:
             st.subheader("Análisis del Estado del Alimento")
+            analyze_cooking_status(temp_filename, gemini_pro)
             
             with st.spinner("Analizando estado del alimento..."):
                 st.info("Procesando imagen para evaluar el estado y calidad del alimento...")
