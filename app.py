@@ -1427,6 +1427,44 @@ def process_image(img_file):
                                 
                                 # Crear una tarjeta informativa moderna
                                 col1, col2 = st.columns([1, 2])
+
+                                with col1:
+                                    # Panel de resumen
+                                    cooking_status_html = ""
+                                    if cooking_status and "nivel_coccion" in item:
+                                        # Determinar color para nivel de cocción
+                                        if item["nivel_coccion"] == "Crudo":
+                                            cooking_color = "#F44336"  # Rojo
+                                            cooking_icon = "🥩"
+                                        elif item["nivel_coccion"] == "Parcialmente cocinado":
+                                            cooking_color = "#FF9800"  # Naranja
+                                            cooking_icon = "🔥"
+                                        else:  # Completamente cocinado
+                                            cooking_color = "#4CAF50"  # Verde
+                                            cooking_icon = "👨‍🍳"
+                                        
+                                        # Mostrar seguridad de consumo
+                                        safe_text = "Seguro para consumo" if item.get("seguro_consumo", False) else "No seguro para consumo"
+                                        safe_color = "#4CAF50" if item.get("seguro_consumo", False) else "#F44336"
+                                        
+                                        cooking_status_html = f"""
+                                        <div style="margin-top: 15px; padding: 12px; border-radius: 8px; background-color: #f8f9fa; border: 1px solid {cooking_color};">
+                                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                                <span style="font-size: 1.5em; margin-right: 8px;">{cooking_icon}</span>
+                                                <span style="font-weight: 600; color: {cooking_color};">{item["nivel_coccion"]}</span>
+                                            </div>
+                                            <div style="margin-top: 5px; padding: 5px 10px; background-color: {safe_color}; color: white; border-radius: 20px; text-align: center; font-size: 0.85em;">
+                                                {safe_text}
+                                            </div>
+                                        </div>
+                                        """
+                                        
+                                        if "tiempo_coccion_recomendado" in item and item["nivel_coccion"] != "Completamente cocinado":
+                                            cooking_status_html += f"""
+                                            <div style="margin-top: 10px; padding: 8px; background-color: #fff8e1; border-radius: 5px; font-size: 0.9em;">
+                                                <strong>Tiempo adicional:</strong> {item["tiempo_coccion_recomendado"]}
+                                            </div>
+                                            """
                                 
                                 with col1:
                                     # Panel de resumen
