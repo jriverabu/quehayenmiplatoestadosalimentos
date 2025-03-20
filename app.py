@@ -1393,7 +1393,7 @@ def process_image(img_file):
                     "tiempo_coccion_recomendado": "tiempo adicional recomendado (solo si aplica)"
                     """
                     prompt_text += """
-                        },
+                    },
                         ...
                     ]"""
                     
