@@ -1392,10 +1392,10 @@ def process_image(img_file):
                     "seguro_consumo": true/false,
                     "tiempo_coccion_recomendado": "tiempo adicional recomendado (solo si aplica)"
                     """
-                            prompt_text += """
-                              },
+                    prompt_text += """
+                        },
                               ...
-                            ]"""
+                    ]"""
                     
                     # Crear mensaje para Gemini
                     food_condition_msg = ChatMessage(
