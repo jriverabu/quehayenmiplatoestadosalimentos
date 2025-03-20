@@ -4,7 +4,6 @@ import numpy as np
 import tempfile
 from llama_index.llms.gemini import Gemini
 from llama_index.core.llms import ChatMessage, ImageBlock, MessageRole, TextBlock
-from cooking_analysis import analyze_cooking_status
 import re
 import os
 import base64
@@ -16,6 +15,8 @@ import json
 from datetime import datetime
 import uuid
 import altair as alt
+
+from cooking_analysis import analyze_cooking_status
 
 # Intentar importar pytesseract, pero manejar caso cuando no está instalado
 try:
