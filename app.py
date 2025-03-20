@@ -1355,6 +1355,9 @@ def process_image(img_file):
             
             with st.spinner("Analizando estado del alimento..."):
                 st.info("Procesando imagen para evaluar el estado y calidad del alimento...")
+                # Añadir opción para detectar si el alimento está crudo
+                cooking_status = st.checkbox("Detectar nivel de cocción del alimento", value=True,
+                                       help="Determina si el alimento está crudo, parcialmente cocinado o totalmente cocinado")
                 
                 # Implementar análisis real del estado con Gemini
                 try:
@@ -1368,6 +1371,13 @@ def process_image(img_file):
                             2. Evalúa su estado (Excelente, Bueno, Regular o Deteriorado)
                             3. Describe brevemente los detalles visuales que indican su estado
                             4. Proporciona recomendaciones sobre su consumo
+
+                            # Añadir instrucciones para detectar nivel de cocción si está activado
+                    if cooking_status:
+                        prompt_text += """
+                    5. Determina el nivel de cocción (Crudo, Parcialmente cocinado, Completamente cocinado)
+                    6. Indica si es seguro consumirlo en su nivel actual de cocción
+                        """    
                             
                             Responde SOLO con un objeto JSON con el siguiente formato (sin texto adicional):
                             [
@@ -1377,6 +1387,14 @@ def process_image(img_file):
                                 "detalles": "descripción_detallada_visual",
                                 "confianza": valor_entre_0_y_1,
                                 "recomendaciones": "recomendación_sobre_consumo"
+                              # Añadir campos adicionales para el nivel de cocción
+                    if cooking_status:
+                        prompt_text += """,
+                        "nivel_coccion": "Crudo/Parcialmente cocinado/Completamente cocinado",
+                        "seguro_consumo": true/false,
+                        "tiempo_coccion_recomendado": "tiempo adicional recomendado (solo si aplica)"
+                        """
+                              
                               },
                               ...
                             ]"""),
@@ -1465,6 +1483,28 @@ def process_image(img_file):
                                                 <strong>Tiempo adicional:</strong> {item["tiempo_coccion_recomendado"]}
                                             </div>
                                             """
+
+                                st.markdown(f"""
+                                    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 5px solid {color};">
+                                        <h2 style="color: #2c3e50; margin-bottom: 10px;">{item['alimento']}</h2>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                            <div style="background-color: {color}; color: white; border-radius: 20px; padding: 8px 16px; display: inline-block; font-weight: bold; font-size: 1.2em;">
+                                                {item['estado']}
+                                            </div>
+                                            <div style="font-size: 2em; margin-left: 10px;">
+                                                {icon}
+                                            </div>
+                                        </div>
+                                        <p style="margin-top: 10px; font-weight: 500;">Nivel de seguridad: <span style="color: {color}; font-weight: 600;">{safety_level}</span></p>
+                                        <p style="margin-top: 10px; font-weight: 500;">Confianza: <span style="color: #3498db; font-weight: 600;">{int(float(item['confianza'])*100)}%</span></p>
+                                        {cooking_status_html}
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                                    
+                                    # Añadir botón para instrucciones específicas
+                                    if st.button(f"📋 Ver guía para {item['alimento']}", key=f"guide_{item['alimento']}"):
+                                        st.info(f"Mostrando información detallada para {item['alimento']}...")
+                                        # Aquí se podrían mostrar instrucciones específicas
                                 
                                 with col1:
                                     # Panel de resumen
