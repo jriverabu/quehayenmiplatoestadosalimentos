@@ -1351,737 +1351,737 @@ def process_image(img_file):
                                     pass
         
             with analysis_tabs[2]:
-            st.subheader("Análisis del Estado del Alimento")
-            
-            # Añadir opción para detectar si el alimento está crudo
-            cooking_status = st.checkbox("Detectar nivel de cocción del alimento", value=True,
-                                       help="Determina si el alimento está crudo, parcialmente cocinado o totalmente cocinado")
-            
-            with st.spinner("Analizando estado del alimento..."):
-                st.info("Procesando imagen para evaluar el estado y calidad del alimento...")
+                st.subheader("Análisis del Estado del Alimento")
                 
-                # Implementar análisis real del estado con Gemini
-                try:
-                    # Modificar el mensaje para incluir análisis de cocción si está activado
-                    prompt_text = """Analiza esta imagen de comida y evalúa el estado y calidad de cada alimento visible.
-                    Para cada alimento:
-                    1. Identifica su nombre
-                    2. Evalúa su estado (Excelente, Bueno, Regular o Deteriorado)
-                    3. Describe brevemente los detalles visuales que indican su estado
-                    4. Proporciona recomendaciones sobre su consumo
-                    """
+                # Añadir opción para detectar si el alimento está crudo
+                cooking_status = st.checkbox("Detectar nivel de cocción del alimento", value=True,
+                                           help="Determina si el alimento está crudo, parcialmente cocinado o totalmente cocinado")
+                
+                with st.spinner("Analizando estado del alimento..."):
+                    st.info("Procesando imagen para evaluar el estado y calidad del alimento...")
                     
-                    # Añadir instrucciones para detectar nivel de cocción si está activado
-                    if cooking_status:
-                        prompt_text += """
-                    5. Determina el nivel de cocción (Crudo, Parcialmente cocinado, Completamente cocinado)
-                    6. Indica si es seguro consumirlo en su nivel actual de cocción
+                    # Implementar análisis real del estado con Gemini
+                    try:
+                        # Modificar el mensaje para incluir análisis de cocción si está activado
+                        prompt_text = """Analiza esta imagen de comida y evalúa el estado y calidad de cada alimento visible.
+                        Para cada alimento:
+                        1. Identifica su nombre
+                        2. Evalúa su estado (Excelente, Bueno, Regular o Deteriorado)
+                        3. Describe brevemente los detalles visuales que indican su estado
+                        4. Proporciona recomendaciones sobre su consumo
                         """
-                    
-                    prompt_text += """
-                    Responde SOLO con un objeto JSON con el siguiente formato (sin texto adicional):
-                    [
-                      {
-                        "alimento": "nombre_del_alimento",
-                        "estado": "Excelente/Bueno/Regular/Deteriorado",
-                        "detalles": "descripción_detallada_visual",
-                        "confianza": valor_entre_0_y_1,
-                        "recomendaciones": "recomendación_sobre_consumo" """
-                    
-                    # Añadir campos adicionales para el nivel de cocción
-                    if cooking_status:
-                        prompt_text += """,
-                        "nivel_coccion": "Crudo/Parcialmente cocinado/Completamente cocinado",
-                        "seguro_consumo": true/false,
-                        "tiempo_coccion_recomendado": "tiempo adicional recomendado (solo si aplica)"
-                        """
-                    
-                    prompt_text += """
-                      },
-                      ...
-                    ]"""
-                    
-                    # Crear mensaje para Gemini
-                    food_condition_msg = ChatMessage(
-                        role=MessageRole.USER,
-                        blocks=[
-                            TextBlock(text=prompt_text),
-                            ImageBlock(path=temp_filename, image_mimetype="image/jpeg"),
-                        ],
-                    )
-                    
-                    # Obtener respuesta de Gemini
-                    condition_response = gemini_pro.chat(messages=[food_condition_msg])
-                    
-                    # Procesar respuesta
-                    condition_text = condition_response.message.content
-                    
-                    # Verificar si es texto JSON y extraerlo
-                    json_match = re.search(r'(\[.*\])', condition_text, re.DOTALL)
-                    if json_match:
-                        json_str = json_match.group(1)
-                        # Parsear JSON
-                        estado_alimentos_real = json.loads(json_str)
                         
-                        # Verificar que tiene la estructura correcta
-                        if isinstance(estado_alimentos_real, list) and len(estado_alimentos_real) > 0:
-                            # Mostrar resultados reales
-                            st.success(f"Se ha analizado el estado de {len(estado_alimentos_real)} alimentos")
+                        # Añadir instrucciones para detectar nivel de cocción si está activado
+                        if cooking_status:
+                            prompt_text += """
+                        5. Determina el nivel de cocción (Crudo, Parcialmente cocinado, Completamente cocinado)
+                        6. Indica si es seguro consumirlo en su nivel actual de cocción
+                            """
+                        
+                        prompt_text += """
+                        Responde SOLO con un objeto JSON con el siguiente formato (sin texto adicional):
+                        [
+                          {
+                            "alimento": "nombre_del_alimento",
+                            "estado": "Excelente/Bueno/Regular/Deteriorado",
+                            "detalles": "descripción_detallada_visual",
+                            "confianza": valor_entre_0_y_1,
+                            "recomendaciones": "recomendación_sobre_consumo" """
+                        
+                        # Añadir campos adicionales para el nivel de cocción
+                        if cooking_status:
+                            prompt_text += """,
+                            "nivel_coccion": "Crudo/Parcialmente cocinado/Completamente cocinado",
+                            "seguro_consumo": true/false,
+                            "tiempo_coccion_recomendado": "tiempo adicional recomendado (solo si aplica)"
+                            """
+                        
+                        prompt_text += """
+                          },
+                          ...
+                        ]"""
+                        
+                        # Crear mensaje para Gemini
+                        food_condition_msg = ChatMessage(
+                            role=MessageRole.USER,
+                            blocks=[
+                                TextBlock(text=prompt_text),
+                                ImageBlock(path=temp_filename, image_mimetype="image/jpeg"),
+                            ],
+                        )
+                        
+                        # Obtener respuesta de Gemini
+                        condition_response = gemini_pro.chat(messages=[food_condition_msg])
+                        
+                        # Procesar respuesta
+                        condition_text = condition_response.message.content
+                        
+                        # Verificar si es texto JSON y extraerlo
+                        json_match = re.search(r'(\[.*\])', condition_text, re.DOTALL)
+                        if json_match:
+                            json_str = json_match.group(1)
+                            # Parsear JSON
+                            estado_alimentos_real = json.loads(json_str)
                             
-                            for item in estado_alimentos_real:
-                                # Determinar color según estado
-                                if item["estado"] == "Excelente":
-                                    color = "#4CAF50"  # Verde
-                                    icon = "✅"
-                                    safety_level = "Alto"
-                                elif item["estado"] == "Bueno":
-                                    color = "#8BC34A"  # Verde claro
-                                    icon = "✓"
-                                    safety_level = "Alto"
-                                elif item["estado"] == "Regular":
-                                    color = "#FFC107"  # Amarillo
-                                    icon = "⚠️"
-                                    safety_level = "Medio"
-                                elif item["estado"] == "Deteriorado":
-                                    color = "#F44336"  # Rojo
-                                    icon = "❌"
-                                    safety_level = "Bajo"
-                                else:
-                                    color = "#9E9E9E"  # Gris
-                                    icon = "❓"
-                                    safety_level = "Desconocido"
+                            # Verificar que tiene la estructura correcta
+                            if isinstance(estado_alimentos_real, list) and len(estado_alimentos_real) > 0:
+                                # Mostrar resultados reales
+                                st.success(f"Se ha analizado el estado de {len(estado_alimentos_real)} alimentos")
                                 
-                                # Crear una tarjeta informativa moderna
-                                col1, col2 = st.columns([1, 2])
-                                
-                                with col1:
-                                    # Panel de resumen
-                                    cooking_status_html = ""
-                                    if cooking_status and "nivel_coccion" in item:
-                                        # Determinar color para nivel de cocción
-                                        if item["nivel_coccion"] == "Crudo":
-                                            cooking_color = "#F44336"  # Rojo
-                                            cooking_icon = "🥩"
-                                        elif item["nivel_coccion"] == "Parcialmente cocinado":
-                                            cooking_color = "#FF9800"  # Naranja
-                                            cooking_icon = "🔥"
-                                        else:  # Completamente cocinado
-                                            cooking_color = "#4CAF50"  # Verde
-                                            cooking_icon = "👨‍🍳"
-                                        
-                                        # Mostrar seguridad de consumo
-                                        safe_text = "Seguro para consumo" if item.get("seguro_consumo", False) else "No seguro para consumo"
-                                        safe_color = "#4CAF50" if item.get("seguro_consumo", False) else "#F44336"
-                                        
-                                        cooking_status_html = f"""
-                                        <div style="margin-top: 15px; padding: 12px; border-radius: 8px; background-color: rgba({int(cooking_color[1:3], 16)}, {int(cooking_color[3:5], 16)}, {int(cooking_color[5:7], 16)}, 0.1); border: 1px solid {cooking_color};">
-                                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                                                <span style="font-size: 1.5em; margin-right: 8px;">{cooking_icon}</span>
-                                                <span style="font-weight: 600; color: {cooking_color};">{item["nivel_coccion"]}</span>
-                                            </div>
-                                            <div style="margin-top: 5px; padding: 5px 10px; background-color: {safe_color}; color: white; border-radius: 20px; text-align: center; font-size: 0.85em;">
-                                                {safe_text}
-                                            </div>
-                                        </div>
-                                        """
-                                        
-                                        if "tiempo_coccion_recomendado" in item and item["nivel_coccion"] != "Completamente cocinado":
-                                            cooking_status_html += f"""
-                                            <div style="margin-top: 10px; font-size: 0.9em;">
-                                                <strong>Tiempo adicional:</strong> {item["tiempo_coccion_recomendado"]}
-                                            </div>
-                                            """
+                                for item in estado_alimentos_real:
+                                    # Determinar color según estado
+                                    if item["estado"] == "Excelente":
+                                        color = "#4CAF50"  # Verde
+                                        icon = "✅"
+                                        safety_level = "Alto"
+                                    elif item["estado"] == "Bueno":
+                                        color = "#8BC34A"  # Verde claro
+                                        icon = "✓"
+                                        safety_level = "Alto"
+                                    elif item["estado"] == "Regular":
+                                        color = "#FFC107"  # Amarillo
+                                        icon = "⚠️"
+                                        safety_level = "Medio"
+                                    elif item["estado"] == "Deteriorado":
+                                        color = "#F44336"  # Rojo
+                                        icon = "❌"
+                                        safety_level = "Bajo"
+                                    else:
+                                        color = "#9E9E9E"  # Gris
+                                        icon = "❓"
+                                        safety_level = "Desconocido"
                                     
-                                    st.markdown(f"""
-                                    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 5px solid {color};">
-                                        <h2 style="color: #2c3e50; margin-bottom: 10px;">{item['alimento']}</h2>
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                            <div style="background-color: {color}; color: white; border-radius: 20px; padding: 8px 16px; display: inline-block; font-weight: bold; font-size: 1.2em;">
-                                                {item['estado']}
-                                            </div>
-                                            <div style="font-size: 2em; margin-left: 10px;">
-                                                {icon}
-                                            </div>
-                                        </div>
-                                        <p style="margin-top: 10px; font-weight: 500;">Nivel de seguridad: <span style="color: {color}; font-weight: 600;">{safety_level}</span></p>
-                                        <p style="margin-top: 10px; font-weight: 500;">Confianza: <span style="color: #3498db; font-weight: 600;">{int(float(item['confianza'])*100)}%</span></p>
-                                        {cooking_status_html}
-                                    </div>
-                                    """, unsafe_allow_html=True)
+                                    # Crear una tarjeta informativa moderna
+                                    col1, col2 = st.columns([1, 2])
                                     
-                                    # Añadir botón para instrucciones específicas
-                                    if st.button(f"📋 Ver guía para {item['alimento']}", key=f"guide_{item['alimento']}"):
-                                        st.info(f"Mostrando información detallada para {item['alimento']}...")
-                                        # Aquí se podrían mostrar instrucciones específicas
-                                
-                                with col2:
-                                    # Crear pestañas para información detallada
-                                    condition_tabs = st.tabs(["📝 Detalles", "🔍 Análisis", "🛟 Recomendaciones"])
-                                    
-                                    with condition_tabs[0]:
-                                        st.markdown(f"""
-                                        <h4 style="color: #2c3e50; border-bottom: 2px solid {color}; padding-bottom: 8px;">Detalles Observados</h4>
-                                        <p style="background-color: #f2f2f2; padding: 15px; border-radius: 8px; line-height: 1.6;">
-                                            {item['detalles']}
-                                        </p>
-                                        """, unsafe_allow_html=True)
-                                        
-                                        # Mostrar indicadores visuales
-                                        st.markdown("#### Indicadores de Calidad")
-                                        
-                                        # Generar indicadores basados en el estado
-                                        indicators = {"Color": 0, "Textura": 0, "Frescura": 0, "Aspecto": 0}
-                                        
-                                        if item["estado"] == "Excelente":
-                                            indicators = {"Color": 95, "Textura": 90, "Frescura": 95, "Aspecto": 92}
-                                        elif item["estado"] == "Bueno":
-                                            indicators = {"Color": 80, "Textura": 82, "Frescura": 78, "Aspecto": 80}
-                                        elif item["estado"] == "Regular":
-                                            indicators = {"Color": 60, "Textura": 65, "Frescura": 55, "Aspecto": 62}
-                                        elif item["estado"] == "Deteriorado":
-                                            indicators = {"Color": 30, "Textura": 25, "Frescura": 20, "Aspecto": 35}
-                                        
-                                        # Mostrar barras de progreso para indicadores
-                                        for indicator, value in indicators.items():
-                                            indicator_color = "#4CAF50" if value > 75 else "#FFC107" if value > 50 else "#F44336"
-                                            st.markdown(f"""
-                                            <div style="margin-bottom: 15px;">
-                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                                                    <span style="font-weight: 500;">{indicator}</span>
-                                                    <span style="font-weight: 600; color: {indicator_color};">{value}%</span>
-                                                </div>
-                                                <div style="background-color: #e0e0e0; border-radius: 10px; height: 8px; width: 100%;">
-                                                    <div style="background-color: {indicator_color}; border-radius: 10px; height: 8px; width: {value}%;"></div>
-                                                </div>
-                                            </div>
-                                            """, unsafe_allow_html=True)
-                                    
-                                    with condition_tabs[1]:
-                                        st.markdown(f"""
-                                        <h4 style="color: #2c3e50; border-bottom: 2px solid {color}; padding-bottom: 8px;">Análisis Detallado</h4>
-                                        """, unsafe_allow_html=True)
-                                        
-                                        # Crear un análisis ficticio pero útil basado en el estado
-                                        analysis_text = ""
-                                        if item["estado"] == "Excelente":
-                                            analysis_text = """
-                                            <ul style="line-height: 1.6;">
-                                                <li><strong>Apariencia:</strong> Características visuales óptimas, color uniforme y brillante</li>
-                                                <li><strong>Textura:</strong> Consistencia adecuada, firmeza apropiada</li>
-                                                <li><strong>Aroma:</strong> Típico del alimento fresco, sin olores extraños</li>
-                                                <li><strong>Signos de deterioro:</strong> Ninguno visible</li>
-                                                <li><strong>Conservación:</strong> Evidencia de almacenamiento adecuado</li>
-                                            </ul>
-                                            """
-                                        elif item["estado"] == "Bueno":
-                                            analysis_text = """
-                                            <ul style="line-height: 1.6;">
-                                                <li><strong>Apariencia:</strong> Características visuales apropiadas, color mayormente uniforme</li>
-                                                <li><strong>Textura:</strong> Consistencia generalmente adecuada con pequeñas variaciones</li>
-                                                <li><strong>Aroma:</strong> Olor característico, sin anomalías significativas</li>
-                                                <li><strong>Signos de deterioro:</strong> Mínimos y no preocupantes</li>
-                                                <li><strong>Conservación:</strong> Condiciones de almacenamiento aceptables</li>
-                                            </ul>
-                                            """
-                                        elif item["estado"] == "Regular":
-                                            analysis_text = """
-                                            <ul style="line-height: 1.6;">
-                                                <li><strong>Apariencia:</strong> Características visuales parcialmente alteradas, color menos uniforme</li>
-                                                <li><strong>Textura:</strong> Cambios notables en la consistencia</li>
-                                                <li><strong>Aroma:</strong> Ligeros cambios en el olor característico</li>
-                                                <li><strong>Signos de deterioro:</strong> Evidentes pero en etapa inicial</li>
-                                                <li><strong>Conservación:</strong> Posibles deficiencias en el almacenamiento</li>
-                                            </ul>
-                                            """
-                                        elif item["estado"] == "Deteriorado":
-                                            analysis_text = """
-                                            <ul style="line-height: 1.6;">
-                                                <li><strong>Apariencia:</strong> Características visuales significativamente alteradas</li>
-                                                <li><strong>Textura:</strong> Consistencia inapropiada, pérdida de integridad estructural</li>
-                                                <li><strong>Aroma:</strong> Olores anómalos o desagradables</li>
-                                                <li><strong>Signos de deterioro:</strong> Claramente visibles y avanzados</li>
-                                                <li><strong>Conservación:</strong> Evidencia de almacenamiento inadecuado o excesivo tiempo</li>
-                                            </ul>
-                                            """
-                                        
-                                        st.markdown(f"{analysis_text}", unsafe_allow_html=True)
-                                        
-                                        # Añadir análisis de nivel de cocción si está activado
+                                    with col1:
+                                        # Panel de resumen
+                                        cooking_status_html = ""
                                         if cooking_status and "nivel_coccion" in item:
+                                            # Determinar color para nivel de cocción
+                                            if item["nivel_coccion"] == "Crudo":
+                                                cooking_color = "#F44336"  # Rojo
+                                                cooking_icon = "🥩"
+                                            elif item["nivel_coccion"] == "Parcialmente cocinado":
+                                                cooking_color = "#FF9800"  # Naranja
+                                                cooking_icon = "🔥"
+                                            else:  # Completamente cocinado
+                                                cooking_color = "#4CAF50"  # Verde
+                                                cooking_icon = "👨‍🍳"
+                                            
+                                            # Mostrar seguridad de consumo
+                                            safe_text = "Seguro para consumo" if item.get("seguro_consumo", False) else "No seguro para consumo"
+                                            safe_color = "#4CAF50" if item.get("seguro_consumo", False) else "#F44336"
+                                            
+                                            cooking_status_html = f"""
+                                            <div style="margin-top: 15px; padding: 12px; border-radius: 8px; background-color: rgba({int(cooking_color[1:3], 16)}, {int(cooking_color[3:5], 16)}, {int(cooking_color[5:7], 16)}, 0.1); border: 1px solid {cooking_color};">
+                                                <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                                    <span style="font-size: 1.5em; margin-right: 8px;">{cooking_icon}</span>
+                                                    <span style="font-weight: 600; color: {cooking_color};">{item["nivel_coccion"]}</span>
+                                                </div>
+                                                <div style="margin-top: 5px; padding: 5px 10px; background-color: {safe_color}; color: white; border-radius: 20px; text-align: center; font-size: 0.85em;">
+                                                    {safe_text}
+                                                </div>
+                                            </div>
+                                            """
+                                            
+                                            if "tiempo_coccion_recomendado" in item and item["nivel_coccion"] != "Completamente cocinado":
+                                                cooking_status_html += f"""
+                                                <div style="margin-top: 10px; font-size: 0.9em;">
+                                                    <strong>Tiempo adicional:</strong> {item["tiempo_coccion_recomendado"]}
+                                                </div>
+                                                """
+                                        
+                                        st.markdown(f"""
+                                        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 5px solid {color};">
+                                            <h2 style="color: #2c3e50; margin-bottom: 10px;">{item['alimento']}</h2>
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                                <div style="background-color: {color}; color: white; border-radius: 20px; padding: 8px 16px; display: inline-block; font-weight: bold; font-size: 1.2em;">
+                                                    {item['estado']}
+                                                </div>
+                                                <div style="font-size: 2em; margin-left: 10px;">
+                                                    {icon}
+                                                </div>
+                                            </div>
+                                            <p style="margin-top: 10px; font-weight: 500;">Nivel de seguridad: <span style="color: {color}; font-weight: 600;">{safety_level}</span></p>
+                                            <p style="margin-top: 10px; font-weight: 500;">Confianza: <span style="color: #3498db; font-weight: 600;">{int(float(item['confianza'])*100)}%</span></p>
+                                            {cooking_status_html}
+                                        </div>
+                                        """, unsafe_allow_html=True)
+                                        
+                                        # Añadir botón para instrucciones específicas
+                                        if st.button(f"📋 Ver guía para {item['alimento']}", key=f"guide_{item['alimento']}"):
+                                            st.info(f"Mostrando información detallada para {item['alimento']}...")
+                                            # Aquí se podrían mostrar instrucciones específicas
+                                    
+                                    with col2:
+                                        # Crear pestañas para información detallada
+                                        condition_tabs = st.tabs(["📝 Detalles", "🔍 Análisis", "🛟 Recomendaciones"])
+                                        
+                                        with condition_tabs[0]:
                                             st.markdown(f"""
-                                            <h4 style="color: #2c3e50; margin-top: 20px; border-bottom: 2px solid {color}; padding-bottom: 8px;">Análisis de Cocción</h4>
+                                            <h4 style="color: #2c3e50; border-bottom: 2px solid {color}; padding-bottom: 8px;">Detalles Observados</h4>
+                                            <p style="background-color: #f2f2f2; padding: 15px; border-radius: 8px; line-height: 1.6;">
+                                                {item['detalles']}
+                                            </p>
                                             """, unsafe_allow_html=True)
                                             
-                                            # Determinar texto de análisis según nivel de cocción
-                                            cooking_analysis = ""
+                                            # Mostrar indicadores visuales
+                                            st.markdown("#### Indicadores de Calidad")
                                             
-                                            if item["nivel_coccion"] == "Crudo":
-                                                cooking_analysis = f"""
-                                                <div style="background-color: rgba(244, 67, 54, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #F44336; margin-top: 10px;">
-                                                    <p style="margin: 0 0 10px 0; font-weight: 500; color: #d32f2f;">El alimento está <strong>crudo</strong></p>
-                                                    <ul style="line-height: 1.6; margin-bottom: 0;">
-                                                        <li><strong>Características visuales:</strong> {item['alimento']} presenta colores y texturas propias de un estado crudo</li>
-                                                        <li><strong>Riesgos potenciales:</strong> Posible presencia de bacterias patógenas como E. coli, Salmonella o parásitos</li>
-                                                        <li><strong>Precauciones:</strong> No se recomienda consumir en este estado, especialmente si se trata de carne, ave, pescado o huevos</li>
-                                                        <li><strong>Tiempo de cocción recomendado:</strong> {item.get('tiempo_coccion_recomendado', 'Requiere cocción completa antes de consumir')}</li>
-                                                    </ul>
-                                                </div>
-                                                """
-                                            elif item["nivel_coccion"] == "Parcialmente cocinado":
-                                                cooking_analysis = f"""
-                                                <div style="background-color: rgba(255, 152, 0, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #FF9800; margin-top: 10px;">
-                                                    <p style="margin: 0 0 10px 0; font-weight: 500; color: #e65100;">El alimento está <strong>parcialmente cocinado</strong></p>
-                                                    <ul style="line-height: 1.6; margin-bottom: 0;">
-                                                        <li><strong>Características visuales:</strong> {item['alimento']} muestra signos de cocción pero no está completamente cocinado</li>
-                                                        <li><strong>Riesgos potenciales:</strong> Puede contener bacterias en el centro o partes menos cocinadas</li>
-                                                        <li><strong>Precauciones:</strong> Verificar que alcance la temperatura interna segura antes de consumir</li>
-                                                        <li><strong>Tiempo de cocción adicional:</strong> {item.get('tiempo_coccion_recomendado', 'Requiere cocción adicional antes de consumir')}</li>
-                                                    </ul>
-                                                </div>
-                                                """
-                                            else:  # Completamente cocinado
-                                                cooking_analysis = f"""
-                                                <div style="background-color: rgba(76, 175, 80, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #4CAF50; margin-top: 10px;">
-                                                    <p style="margin: 0 0 10px 0; font-weight: 500; color: #2e7d32;">El alimento está <strong>completamente cocinado</strong></p>
-                                                    <ul style="line-height: 1.6; margin-bottom: 0;">
-                                                        <li><strong>Características visuales:</strong> {item['alimento']} presenta signos claros de cocción completa</li>
-                                                        <li><strong>Seguridad alimentaria:</strong> El nivel de cocción es adecuado para eliminar la mayoría de los patógenos</li>
-                                                        <li><strong>Beneficios:</strong> Mejor digestibilidad, sabor y textura desarrollados apropiadamente</li>
-                                                        <li><strong>Recomendación:</strong> Apto para consumo inmediato</li>
-                                                    </ul>
-                                                </div>
-                                                """
+                                            # Generar indicadores basados en el estado
+                                            indicators = {"Color": 0, "Textura": 0, "Frescura": 0, "Aspecto": 0}
                                             
-                                            st.markdown(cooking_analysis, unsafe_allow_html=True)
+                                            if item["estado"] == "Excelente":
+                                                indicators = {"Color": 95, "Textura": 90, "Frescura": 95, "Aspecto": 92}
+                                            elif item["estado"] == "Bueno":
+                                                indicators = {"Color": 80, "Textura": 82, "Frescura": 78, "Aspecto": 80}
+                                            elif item["estado"] == "Regular":
+                                                indicators = {"Color": 60, "Textura": 65, "Frescura": 55, "Aspecto": 62}
+                                            elif item["estado"] == "Deteriorado":
+                                                indicators = {"Color": 30, "Textura": 25, "Frescura": 20, "Aspecto": 35}
                                             
-                                            # Añadir temperaturas seguras de referencia para diferentes alimentos
-                                            if item["nivel_coccion"] != "Completamente cocinado":
+                                            # Mostrar barras de progreso para indicadores
+                                            for indicator, value in indicators.items():
+                                                indicator_color = "#4CAF50" if value > 75 else "#FFC107" if value > 50 else "#F44336"
                                                 st.markdown(f"""
-                                                <div style="margin-top: 15px;">
-                                                    <h5 style="color: #2c3e50;">Temperaturas internas seguras de referencia:</h5>
-                                                    <ul style="line-height: 1.6;">
-                                                        <li><strong>Aves (pollo, pavo):</strong> 74°C (165°F)</li>
-                                                        <li><strong>Carne molida:</strong> 71°C (160°F)</li>
-                                                        <li><strong>Cerdo:</strong> 63°C (145°F) con 3 minutos de reposo</li>
-                                                        <li><strong>Carne de res (filetes, asados):</strong> 63°C (145°F) con 3 minutos de reposo</li>
-                                                        <li><strong>Pescado:</strong> 63°C (145°F) o hasta que la carne esté opaca y se separe fácilmente</li>
-                                                    </ul>
+                                                <div style="margin-bottom: 15px;">
+                                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                                        <span style="font-weight: 500;">{indicator}</span>
+                                                        <span style="font-weight: 600; color: {indicator_color};">{value}%</span>
+                                                    </div>
+                                                    <div style="background-color: #e0e0e0; border-radius: 10px; height: 8px; width: 100%;">
+                                                        <div style="background-color: {indicator_color}; border-radius: 10px; height: 8px; width: {value}%;"></div>
+                                                    </div>
                                                 </div>
                                                 """, unsafe_allow_html=True)
-                                    
-                                    with condition_tabs[2]:
-                                        st.markdown(f"""
-                                        <h4 style="color: #2c3e50; border-bottom: 2px solid {color}; padding-bottom: 8px;">Recomendaciones de Seguridad</h4>
-                                        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid {color};">
-                                            <p style="font-weight: 500;">{item['recomendaciones']}</p>
-                                        </div>
-                                        """, unsafe_allow_html=True)
                                         
-                                        # Añadir recomendaciones específicas de cocción si está activado
-                                        if cooking_status and "nivel_coccion" in item:
-                                            cooking_level = item["nivel_coccion"]
-                                            is_safe = item.get("seguro_consumo", False)
-                                            
+                                        with condition_tabs[1]:
                                             st.markdown(f"""
-                                            <h4 style="color: #2c3e50; margin-top: 20px; border-bottom: 2px solid {color}; padding-bottom: 8px;">Recomendaciones de Cocción</h4>
+                                            <h4 style="color: #2c3e50; border-bottom: 2px solid {color}; padding-bottom: 8px;">Análisis Detallado</h4>
                                             """, unsafe_allow_html=True)
                                             
-                                            if cooking_level == "Crudo":
-                                                st.error("⚠️ **IMPORTANTE**: Este alimento está crudo y requiere cocción antes de consumirse.")
+                                            # Crear un análisis ficticio pero útil basado en el estado
+                                            analysis_text = ""
+                                            if item["estado"] == "Excelente":
+                                                analysis_text = """
+                                                <ul style="line-height: 1.6;">
+                                                    <li><strong>Apariencia:</strong> Características visuales óptimas, color uniforme y brillante</li>
+                                                    <li><strong>Textura:</strong> Consistencia adecuada, firmeza apropiada</li>
+                                                    <li><strong>Aroma:</strong> Típico del alimento fresco, sin olores extraños</li>
+                                                    <li><strong>Signos de deterioro:</strong> Ninguno visible</li>
+                                                    <li><strong>Conservación:</strong> Evidencia de almacenamiento adecuado</li>
+                                                </ul>
+                                                """
+                                            elif item["estado"] == "Bueno":
+                                                analysis_text = """
+                                                <ul style="line-height: 1.6;">
+                                                    <li><strong>Apariencia:</strong> Características visuales apropiadas, color mayormente uniforme</li>
+                                                    <li><strong>Textura:</strong> Consistencia generalmente adecuada con pequeñas variaciones</li>
+                                                    <li><strong>Aroma:</strong> Olor característico, sin anomalías significativas</li>
+                                                    <li><strong>Signos de deterioro:</strong> Mínimos y no preocupantes</li>
+                                                    <li><strong>Conservación:</strong> Condiciones de almacenamiento aceptables</li>
+                                                </ul>
+                                                """
+                                            elif item["estado"] == "Regular":
+                                                analysis_text = """
+                                                <ul style="line-height: 1.6;">
+                                                    <li><strong>Apariencia:</strong> Características visuales parcialmente alteradas, color menos uniforme</li>
+                                                    <li><strong>Textura:</strong> Cambios notables en la consistencia</li>
+                                                    <li><strong>Aroma:</strong> Ligeros cambios en el olor característico</li>
+                                                    <li><strong>Signos de deterioro:</strong> Evidentes pero en etapa inicial</li>
+                                                    <li><strong>Conservación:</strong> Posibles deficiencias en el almacenamiento</li>
+                                                </ul>
+                                                """
+                                            elif item["estado"] == "Deteriorado":
+                                                analysis_text = """
+                                                <ul style="line-height: 1.6;">
+                                                    <li><strong>Apariencia:</strong> Características visuales significativamente alteradas</li>
+                                                    <li><strong>Textura:</strong> Consistencia inapropiada, pérdida de integridad estructural</li>
+                                                    <li><strong>Aroma:</strong> Olores anómalos o desagradables</li>
+                                                    <li><strong>Signos de deterioro:</strong> Claramente visibles y avanzados</li>
+                                                    <li><strong>Conservación:</strong> Evidencia de almacenamiento inadecuado o excesivo tiempo</li>
+                                                </ul>
+                                                """
+                                            
+                                            st.markdown(f"{analysis_text}", unsafe_allow_html=True)
+                                            
+                                            # Añadir análisis de nivel de cocción si está activado
+                                            if cooking_status and "nivel_coccion" in item:
+                                                st.markdown(f"""
+                                                <h4 style="color: #2c3e50; margin-top: 20px; border-bottom: 2px solid {color}; padding-bottom: 8px;">Análisis de Cocción</h4>
+                                                """, unsafe_allow_html=True)
                                                 
-                                                if "tiempo_coccion_recomendado" in item:
-                                                    st.info(f"**Tiempo de cocción recomendado**: {item['tiempo_coccion_recomendado']}")
+                                                # Determinar texto de análisis según nivel de cocción
+                                                cooking_analysis = ""
                                                 
-                                                # Recomendaciones específicas según tipo de alimento
-                                                food_type = item['alimento'].lower()
-                                                if any(meat in food_type for meat in ["pollo", "pavo", "ave"]):
-                    st.markdown("""
-                                                    **Recomendaciones para aves:**
-                                                    - Cocinar hasta que la temperatura interna alcance 74°C (165°F)
-                                                    - Verificar que no haya partes rosadas en el centro
-                                                    - Los jugos deben ser claros, no rosados
-                                                    - Evitar la contaminación cruzada limpiando superficies y utensilios
-                                                    """)
-                                                elif any(meat in food_type for meat in ["res", "ternera", "steak", "filete"]):
-                    st.markdown("""
-                                                    **Recomendaciones para carne de res:**
-                                                    - Temperatura mínima recomendada: 63°C (145°F) con 3 minutos de reposo
-                                                    - Para términos específicos:
-                                                      - Término medio: 63-65°C (145-150°F)
-                                                      - Tres cuartos: 66-70°C (150-160°F)
-                                                      - Bien cocido: +71°C (+160°F)
-                                                    """)
-                                                elif any(fish in food_type for fish in ["pescado", "atún", "salmón", "pez"]):
-                    st.markdown("""
-                                                    **Recomendaciones para pescado:**
-                                                    - Cocinar hasta 63°C (145°F) o hasta que la carne esté opaca y se separe fácilmente
-                                                    - Si desea consumirlo crudo, asegúrese de que sea apto para consumo crudo y haya sido previamente congelado para eliminar parásitos
-                                                    """)
-                                                else:
-                    st.markdown("""
-                                                    **Recomendaciones generales:**
-                                                    - Cocinar completamente antes de consumir
-                                                    - Utilizar termómetro para alimentos para verificar la temperatura interna
-                                                    - Mantener separados los alimentos crudos de los cocinados
-                                                    """)
+                                                if item["nivel_coccion"] == "Crudo":
+                                                    cooking_analysis = f"""
+                                                    <div style="background-color: rgba(244, 67, 54, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #F44336; margin-top: 10px;">
+                                                        <p style="margin: 0 0 10px 0; font-weight: 500; color: #d32f2f;">El alimento está <strong>crudo</strong></p>
+                                                        <ul style="line-height: 1.6; margin-bottom: 0;">
+                                                            <li><strong>Características visuales:</strong> {item['alimento']} presenta colores y texturas propias de un estado crudo</li>
+                                                            <li><strong>Riesgos potenciales:</strong> Posible presencia de bacterias patógenas como E. coli, Salmonella o parásitos</li>
+                                                            <li><strong>Precauciones:</strong> No se recomienda consumir en este estado, especialmente si se trata de carne, ave, pescado o huevos</li>
+                                                            <li><strong>Tiempo de cocción recomendado:</strong> {item.get('tiempo_coccion_recomendado', 'Requiere cocción completa antes de consumir')}</li>
+                                                        </ul>
+                                                    </div>
+                                                    """
+                                                elif item["nivel_coccion"] == "Parcialmente cocinado":
+                                                    cooking_analysis = f"""
+                                                    <div style="background-color: rgba(255, 152, 0, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #FF9800; margin-top: 10px;">
+                                                        <p style="margin: 0 0 10px 0; font-weight: 500; color: #e65100;">El alimento está <strong>parcialmente cocinado</strong></p>
+                                                        <ul style="line-height: 1.6; margin-bottom: 0;">
+                                                            <li><strong>Características visuales:</strong> {item['alimento']} muestra signos de cocción pero no está completamente cocinado</li>
+                                                            <li><strong>Riesgos potenciales:</strong> Puede contener bacterias en el centro o partes menos cocinadas</li>
+                                                            <li><strong>Precauciones:</strong> Verificar que alcance la temperatura interna segura antes de consumir</li>
+                                                            <li><strong>Tiempo de cocción adicional:</strong> {item.get('tiempo_coccion_recomendado', 'Requiere cocción adicional antes de consumir')}</li>
+                                                        </ul>
+                                                    </div>
+                                                    """
+                                                else:  # Completamente cocinado
+                                                    cooking_analysis = f"""
+                                                    <div style="background-color: rgba(76, 175, 80, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #4CAF50; margin-top: 10px;">
+                                                        <p style="margin: 0 0 10px 0; font-weight: 500; color: #2e7d32;">El alimento está <strong>completamente cocinado</strong></p>
+                                                        <ul style="line-height: 1.6; margin-bottom: 0;">
+                                                            <li><strong>Características visuales:</strong> {item['alimento']} presenta signos claros de cocción completa</li>
+                                                            <li><strong>Seguridad alimentaria:</strong> El nivel de cocción es adecuado para eliminar la mayoría de los patógenos</li>
+                                                            <li><strong>Beneficios:</strong> Mejor digestibilidad, sabor y textura desarrollados apropiadamente</li>
+                                                            <li><strong>Recomendación:</strong> Apto para consumo inmediato</li>
+                                                        </ul>
+                                                    </div>
+                                                    """
                                                 
-                                            elif cooking_level == "Parcialmente cocinado":
-                                                st.warning("⚠️ Este alimento está parcialmente cocinado y puede requerir cocción adicional.")
+                                                st.markdown(cooking_analysis, unsafe_allow_html=True)
                                                 
-                                                if "tiempo_coccion_recomendado" in item:
-                                                    st.info(f"**Tiempo de cocción adicional recomendado**: {item['tiempo_coccion_recomendado']}")
-                                                
-                    st.markdown("""
-                                                **Pasos recomendados:**
-                                                1. Continuar la cocción hasta alcanzar la temperatura interna segura
-                                                2. Verificar el centro del alimento para asegurarse de que esté completamente cocinado
-                                                3. No interrumpir el proceso de cocción durante demasiado tiempo
-                                                """)
-                                                
-                                            else:  # Completamente cocinado
-                                                st.success("✅ Este alimento está completamente cocinado y listo para consumir.")
-                                                
-                    st.markdown("""
-                                                **Recomendaciones:**
-                                                - Mantener caliente (por encima de 60°C/140°F) si no se va a consumir inmediatamente
-                                                - Refrigerar dentro de las 2 horas de cocción si se va a almacenar
-                                                - Recalentar a 74°C (165°F) si se ha refrigerado
-                                                """)
+                                                # Añadir temperaturas seguras de referencia para diferentes alimentos
+                                                if item["nivel_coccion"] != "Completamente cocinado":
+                                                    st.markdown(f"""
+                                                    <div style="margin-top: 15px;">
+                                                        <h5 style="color: #2c3e50;">Temperaturas internas seguras de referencia:</h5>
+                                                        <ul style="line-height: 1.6;">
+                                                            <li><strong>Aves (pollo, pavo):</strong> 74°C (165°F)</li>
+                                                            <li><strong>Carne molida:</strong> 71°C (160°F)</li>
+                                                            <li><strong>Cerdo:</strong> 63°C (145°F) con 3 minutos de reposo</li>
+                                                            <li><strong>Carne de res (filetes, asados):</strong> 63°C (145°F) con 3 minutos de reposo</li>
+                                                            <li><strong>Pescado:</strong> 63°C (145°F) o hasta que la carne esté opaca y se separe fácilmente</li>
+                                                        </ul>
+                                                    </div>
+                                                    """, unsafe_allow_html=True)
                                         
-                                        # Añadir recomendaciones adicionales basadas en el estado
-                                        st.markdown("#### Acciones recomendadas")
-                                        
-                                        actions = []
-                                        if item["estado"] == "Excelente":
-                                            actions = [
-                                                "✅ Apto para consumo inmediato",
-                                                "✅ Puede conservarse según indicaciones del envase",
-                                                "✅ Seguro para todos los grupos de población",
-                                                "✅ Calidad nutricional óptima"
-                                            ]
-                                        elif item["estado"] == "Bueno":
-                                            actions = [
-                                                "✅ Apto para consumo inmediato",
-                                                "⚠️ Consumir preferentemente en los próximos días",
-                                                "✅ Seguro para la mayoría de los grupos de población",
-                                                "✅ Calidad nutricional adecuada"
-                                            ]
-                                        elif item["estado"] == "Regular":
-                                            actions = [
-                                                "⚠️ Consumir con precaución",
-                                                "⚠️ Recomendable consumir el mismo día",
-                                                "⚠️ No recomendado para personas con sistema inmunológico comprometido",
-                                                "⚠️ Posible pérdida parcial de valor nutricional"
-                                            ]
-                                        elif item["estado"] == "Deteriorado":
-                                            actions = [
-                                                "❌ No recomendado para consumo",
-                                                "❌ Desechar de forma apropiada",
-                                                "❌ Riesgo potencial para la salud",
-                                                "❌ Pérdida significativa de calidad nutricional"
-                                            ]
-                                        
-                                        for action in actions:
-                                            st.markdown(f"<p style='margin: 5px 0;'>{action}</p>", unsafe_allow_html=True)
-                                
-                                # Línea divisoria entre elementos
-                                st.markdown("<hr>", unsafe_allow_html=True)
+                                        with condition_tabs[2]:
+                                            st.markdown(f"""
+                                            <h4 style="color: #2c3e50; border-bottom: 2px solid {color}; padding-bottom: 8px;">Recomendaciones de Seguridad</h4>
+                                            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid {color};">
+                                                <p style="font-weight: 500;">{item['recomendaciones']}</p>
+                                            </div>
+                                            """, unsafe_allow_html=True)
+                                            
+                                            # Añadir recomendaciones específicas de cocción si está activado
+                                            if cooking_status and "nivel_coccion" in item:
+                                                cooking_level = item["nivel_coccion"]
+                                                is_safe = item.get("seguro_consumo", False)
+                                                
+                                                st.markdown(f"""
+                                                <h4 style="color: #2c3e50; margin-top: 20px; border-bottom: 2px solid {color}; padding-bottom: 8px;">Recomendaciones de Cocción</h4>
+                                                """, unsafe_allow_html=True)
+                                                
+                                                if cooking_level == "Crudo":
+                                                    st.error("⚠️ **IMPORTANTE**: Este alimento está crudo y requiere cocción antes de consumirse.")
+                                                    
+                                                    if "tiempo_coccion_recomendado" in item:
+                                                        st.info(f"**Tiempo de cocción recomendado**: {item['tiempo_coccion_recomendado']}")
+                                                    
+                                                    # Recomendaciones específicas según tipo de alimento
+                                                    food_type = item['alimento'].lower()
+                                                    if any(meat in food_type for meat in ["pollo", "pavo", "ave"]):
+                        st.markdown("""
+                                                        **Recomendaciones para aves:**
+                                                        - Cocinar hasta que la temperatura interna alcance 74°C (165°F)
+                                                        - Verificar que no haya partes rosadas en el centro
+                                                        - Los jugos deben ser claros, no rosados
+                                                        - Evitar la contaminación cruzada limpiando superficies y utensilios
+                                                        """)
+                                                    elif any(meat in food_type for meat in ["res", "ternera", "steak", "filete"]):
+                        st.markdown("""
+                                                        **Recomendaciones para carne de res:**
+                                                        - Temperatura mínima recomendada: 63°C (145°F) con 3 minutos de reposo
+                                                        - Para términos específicos:
+                                                          - Término medio: 63-65°C (145-150°F)
+                                                          - Tres cuartos: 66-70°C (150-160°F)
+                                                          - Bien cocido: +71°C (+160°F)
+                                                        """)
+                                                    elif any(fish in food_type for fish in ["pescado", "atún", "salmón", "pez"]):
+                        st.markdown("""
+                                                        **Recomendaciones para pescado:**
+                                                        - Cocinar hasta 63°C (145°F) o hasta que la carne esté opaca y se separe fácilmente
+                                                        - Si desea consumirlo crudo, asegúrese de que sea apto para consumo crudo y haya sido previamente congelado para eliminar parásitos
+                                                        """)
+                                                    else:
+                        st.markdown("""
+                                                        **Recomendaciones generales:**
+                                                        - Cocinar completamente antes de consumir
+                                                        - Utilizar termómetro para alimentos para verificar la temperatura interna
+                                                        - Mantener separados los alimentos crudos de los cocinados
+                                                        """)
+                                                    
+                                                elif cooking_level == "Parcialmente cocinado":
+                                                    st.warning("⚠️ Este alimento está parcialmente cocinado y puede requerir cocción adicional.")
+                                                    
+                                                    if "tiempo_coccion_recomendado" in item:
+                                                        st.info(f"**Tiempo de cocción adicional recomendado**: {item['tiempo_coccion_recomendado']}")
+                                                    
+                        st.markdown("""
+                                                    **Pasos recomendados:**
+                                                    1. Continuar la cocción hasta alcanzar la temperatura interna segura
+                                                    2. Verificar el centro del alimento para asegurarse de que esté completamente cocinado
+                                                    3. No interrumpir el proceso de cocción durante demasiado tiempo
+                                                    """)
+                                                    
+                                                else:  # Completamente cocinado
+                                                    st.success("✅ Este alimento está completamente cocinado y listo para consumir.")
+                                                    
+                        st.markdown("""
+                                                    **Recomendaciones:**
+                                                    - Mantener caliente (por encima de 60°C/140°F) si no se va a consumir inmediatamente
+                                                    - Refrigerar dentro de las 2 horas de cocción si se va a almacenar
+                                                    - Recalentar a 74°C (165°F) si se ha refrigerado
+                                                    """)
+                                            
+                                            # Añadir recomendaciones adicionales basadas en el estado
+                                            st.markdown("#### Acciones recomendadas")
+                                            
+                                            actions = []
+                                            if item["estado"] == "Excelente":
+                                                actions = [
+                                                    "✅ Apto para consumo inmediato",
+                                                    "✅ Puede conservarse según indicaciones del envase",
+                                                    "✅ Seguro para todos los grupos de población",
+                                                    "✅ Calidad nutricional óptima"
+                                                ]
+                                            elif item["estado"] == "Bueno":
+                                                actions = [
+                                                    "✅ Apto para consumo inmediato",
+                                                    "⚠️ Consumir preferentemente en los próximos días",
+                                                    "✅ Seguro para la mayoría de los grupos de población",
+                                                    "✅ Calidad nutricional adecuada"
+                                                ]
+                                            elif item["estado"] == "Regular":
+                                                actions = [
+                                                    "⚠️ Consumir con precaución",
+                                                    "⚠️ Recomendable consumir el mismo día",
+                                                    "⚠️ No recomendado para personas con sistema inmunológico comprometido",
+                                                    "⚠️ Posible pérdida parcial de valor nutricional"
+                                                ]
+                                            elif item["estado"] == "Deteriorado":
+                                                actions = [
+                                                    "❌ No recomendado para consumo",
+                                                    "❌ Desechar de forma apropiada",
+                                                    "❌ Riesgo potencial para la salud",
+                                                    "❌ Pérdida significativa de calidad nutricional"
+                                                ]
+                                            
+                                            for action in actions:
+                                                st.markdown(f"<p style='margin: 5px 0;'>{action}</p>", unsafe_allow_html=True)
+                                    
+                                    # Línea divisoria entre elementos
+                                    st.markdown("<hr>", unsafe_allow_html=True)
+                            
+                    except Exception as e:
+                        st.error(f"Error al analizar el estado del alimento con IA: {str(e)}")
                         
-                except Exception as e:
-                    st.error(f"Error al analizar el estado del alimento con IA: {str(e)}")
-                    
-                    if 'show_debug' in st.session_state and st.session_state.show_debug:
-                        st.text("Respuesta original de Gemini:")
-                        st.code(condition_text if 'condition_text' in locals() else "No disponible")
-                        st.exception(e)
-                    
-                    # Mostrar mensaje y usar datos de ejemplo como respaldo
-                    st.warning("Usando datos de ejemplo debido a un error en el análisis con IA")
-                    
-                    # Ejemplo de análisis del estado (simulado)
-                    estado_alimentos = [
-                        {
-                            "alimento": "Pollo a la parrilla",
-                            "estado": "Excelente",
-                            "detalles": "El color y textura indican que está recién preparado",
-                            "confianza": 0.94,
-                            "recomendaciones": "Seguro para consumo"
-                        },
-                        {
-                            "alimento": "Arroz blanco",
-                            "estado": "Bueno",
-                            "detalles": "Textura adecuada, sin signos de deterioro",
-                            "confianza": 0.88,
-                            "recomendaciones": "Seguro para consumo"
-                        },
-                        {
-                            "alimento": "Ensalada verde",
-                            "estado": "Regular",
-                            "detalles": "Algunas hojas muestran signos leves de marchitamiento",
-                            "confianza": 0.82,
-                            "recomendaciones": "Consumir pronto"
-                        }
-                    ]
-                    
-                    # Mostrar resultados de ejemplo
-                    for item in estado_alimentos:
-                        # Determinar color según estado
-                        if item["estado"] == "Excelente":
-                            color = "#4CAF50"  # Verde
-                        elif item["estado"] == "Bueno":
-                            color = "#8BC34A"  # Verde claro
-                        elif item["estado"] == "Regular":
-                            color = "#FFC107"  # Amarillo
-                        elif item["estado"] == "Deteriorado":
-                            color = "#F44336"  # Rojo
-                        else:
-                            color = "#9E9E9E"  # Gris
+                        if 'show_debug' in st.session_state and st.session_state.show_debug:
+                            st.text("Respuesta original de Gemini:")
+                            st.code(condition_text if 'condition_text' in locals() else "No disponible")
+                            st.exception(e)
                         
-                        # Crear tarjeta para el estado
-                        st.markdown(f"""
-                        <div class="condition-info" style="border-left: 4px solid {color};">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <h4>{item['alimento']}</h4>
-                                <span style="background-color: {color}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; font-weight: 500;">{item['estado']}</span>
+                        # Mostrar mensaje y usar datos de ejemplo como respaldo
+                        st.warning("Usando datos de ejemplo debido a un error en el análisis con IA")
+                        
+                        # Ejemplo de análisis del estado (simulado)
+                        estado_alimentos = [
+                            {
+                                "alimento": "Pollo a la parrilla",
+                                "estado": "Excelente",
+                                "detalles": "El color y textura indican que está recién preparado",
+                                "confianza": 0.94,
+                                "recomendaciones": "Seguro para consumo"
+                            },
+                            {
+                                "alimento": "Arroz blanco",
+                                "estado": "Bueno",
+                                "detalles": "Textura adecuada, sin signos de deterioro",
+                                "confianza": 0.88,
+                                "recomendaciones": "Seguro para consumo"
+                            },
+                            {
+                                "alimento": "Ensalada verde",
+                                "estado": "Regular",
+                                "detalles": "Algunas hojas muestran signos leves de marchitamiento",
+                                "confianza": 0.82,
+                                "recomendaciones": "Consumir pronto"
+                            }
+                        ]
+                        
+                        # Mostrar resultados de ejemplo
+                        for item in estado_alimentos:
+                            # Determinar color según estado
+                            if item["estado"] == "Excelente":
+                                color = "#4CAF50"  # Verde
+                            elif item["estado"] == "Bueno":
+                                color = "#8BC34A"  # Verde claro
+                            elif item["estado"] == "Regular":
+                                color = "#FFC107"  # Amarillo
+                            elif item["estado"] == "Deteriorado":
+                                color = "#F44336"  # Rojo
+                            else:
+                                color = "#9E9E9E"  # Gris
+                            
+                            # Crear tarjeta para el estado
+                            st.markdown(f"""
+                            <div class="condition-info" style="border-left: 4px solid {color};">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <h4>{item['alimento']}</h4>
+                                    <span style="background-color: {color}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; font-weight: 500;">{item['estado']}</span>
+                                </div>
+                                <p><strong>Detalles:</strong> <span class="condition-detail">{item['detalles']}</span></p>
+                                <p><strong>Confianza:</strong> <span class="condition-confidence">{int(float(item['confianza'])*100)}%</span></p>
+                                <p><strong>Recomendación:</strong> <span class="condition-recommendation">{item['recomendaciones']}</span></p>
                             </div>
-                            <p><strong>Detalles:</strong> <span class="condition-detail">{item['detalles']}</span></p>
-                            <p><strong>Confianza:</strong> <span class="condition-confidence">{int(float(item['confianza'])*100)}%</span></p>
-                            <p><strong>Recomendación:</strong> <span class="condition-recommendation">{item['recomendaciones']}</span></p>
-                        </div>
-                        """, unsafe_allow_html=True)
-    
-    except Exception as e:
-        st.error(f"Error al procesar la imagen: {str(e)}")
-        if 'show_debug' in st.session_state and st.session_state.show_debug:
-            st.exception(e)
-    
-    finally:
-        # Eliminar el archivo temporal
-        try:
-            os.unlink(temp_filename)
-        except:
-            pass
-
-def about_page():
-    st.title("Sobre ¿Qué hay en tu plato?")
-    st.markdown("""
-    ¿Qué hay en tu plato? es una aplicación de análisis nutricional impulsada por inteligencia artificial que te permite:
-
-    - **Identificar alimentos** en imágenes con alta precisión
-    - **Calcular información nutricional** como calorías, proteínas, carbohidratos y grasas
-    - **Detectar el estado de los alimentos** para garantizar su seguridad alimentaria
-    - **Detectar fechas de vencimiento** y verificar si los productos están vencidos
-    - **Recibir recomendaciones personalizadas** para mejorar tus hábitos alimenticios
-    - **Visualizar datos** a través de gráficos interactivos
-    - **Exportar y guardar** tus análisis para seguimiento
-
-    Esta aplicación utiliza el modelo Gemini de Google para proporcionar análisis precisos y recomendaciones personalizadas.
-
-    ### Tecnologías utilizadas
-    - Streamlit para la interfaz de usuario
-    - Google Gemini para análisis de imágenes e información nutricional
-    - OpenCV para procesamiento de imágenes
-    - Altair y Pandas para visualización de datos
-    - Tesseract OCR (opcional) para detectar fechas de vencimiento
-    
-    ### Funcionalidad de detección del estado de los alimentos
-    
-    Nuestra aplicación ahora incluye una avanzada funcionalidad de detección del estado de los alimentos que:
-    
-    - Analiza visualmente cada alimento para detectar signos de deterioro
-    - Evalúa el color, textura y apariencia general
-    - Clasifica los alimentos en diferentes estados (Excelente, Bueno, Regular, Deteriorado)
-    - Proporciona recomendaciones específicas sobre el consumo seguro
-    - Ofrece guías educativas sobre cómo identificar alimentos en mal estado
-    
-    ### Detección de fechas de vencimiento
-    
-    La aplicación ahora cuenta con la capacidad de detectar fechas de vencimiento en los envases de alimentos:
-    
-    - Utiliza tecnología OCR (Reconocimiento Óptico de Caracteres) para leer texto de imágenes
-    - Identifica formatos comunes de fechas de vencimiento (DD/MM/AAAA, MM/DD/AA, etc.)
-    - Compara automáticamente con la fecha actual para determinar si un producto está vencido
-    - Proporciona alertas visuales para productos vencidos o próximos a vencer
-    - Ofrece recomendaciones específicas sobre cómo actuar cuando un producto está vencido
-    
-    > **Nota**: Esta funcionalidad requiere la biblioteca pytesseract y Tesseract OCR instalados en el sistema. Si no están disponibles, se usará una simulación para demostrar la funcionalidad.
-    """)
-
-def contact_page():
-    st.title("Investigaciones y Recursos")
-    
-    # Crear pestañas para separar contenido
-    tabs = st.tabs(["Historial de Análisis", "Historial de Fechas", "Contacto", "Recursos"])
-    
-    with tabs[0]:
-    # Mostrar historial de análisis si existe
-    if 'historial_analisis' in st.session_state and st.session_state.historial_analisis:
-        st.subheader("Historial de Análisis")
+                            """, unsafe_allow_html=True)
         
-        for i, analisis in enumerate(st.session_state.historial_analisis):
-            with st.expander(f"Análisis #{i+1} - {analisis['date']}"):
-                st.write(f"ID: {analisis['id']}")
-                st.write(f"Total calorías: {analisis['total_calories']} kcal")
-                
-                # Crear tabla de alimentos
-                items_df = pd.DataFrame([{
-                    "Alimento": item["name"],
-                    "Calorías": item["nutrition"].get("total_calories", 0),
-                    "Proteínas (g)": item["nutrition"].get("protein_g", 0),
-                    "Carbohidratos (g)": item["nutrition"].get("carbs_g", 0),
-                    "Grasas (g)": item["nutrition"].get("fat_g", 0)
-                } for item in analisis["items"]])
-                
-                st.dataframe(items_df)
-        else:
-            st.info("No hay análisis guardados todavía. Analiza alimentos en la herramienta principal y guarda los resultados para verlos aquí.")
-    
-    with tabs[1]:
-        st.subheader("Historial de Fechas de Vencimiento")
+        except Exception as e:
+            st.error(f"Error al procesar la imagen: {str(e)}")
+            if 'show_debug' in st.session_state and st.session_state.show_debug:
+                st.exception(e)
         
-        # Mostrar fechas guardadas si existen
-        if 'fechas_guardadas' in st.session_state and st.session_state.fechas_guardadas:
-            # Agrupar por tipo (vencidas, por vencer, vigentes)
-            vencidas = [f for f in st.session_state.fechas_guardadas if f.get('is_expired', False)]
-            por_vencer = [f for f in st.session_state.fechas_guardadas if not f.get('is_expired', False) and f.get('days_remaining', 0) < 7]
-            vigentes = [f for f in st.session_state.fechas_guardadas if not f.get('is_expired', False) and f.get('days_remaining', 0) >= 7]
-            
-            # Crear pestañas para cada categoría
-            fecha_tabs = st.tabs(["Todas", f"Vencidas ({len(vencidas)})", f"Por vencer ({len(por_vencer)})", f"Vigentes ({len(vigentes)})"])
-            
-            with fecha_tabs[0]:
-                st.markdown(f"### Total de fechas guardadas: {len(st.session_state.fechas_guardadas)}")
-                
-                # Botón para eliminar todo el historial
-                if st.button("🗑️ Borrar todo el historial de fechas"):
-                    st.session_state.fechas_guardadas = []
-                    st.success("Historial borrado correctamente")
-                    st.experimental_rerun()
-                
-                # Mostrar todas las fechas
-                for i, fecha in enumerate(st.session_state.fechas_guardadas):
-                    # Determinar color y estado
-                    if fecha.get('is_expired', False):
-                        badge_color = "#f44336"
-                        badge_text = "VENCIDO"
-                        bg_color = "#ffebee"
-                    elif fecha.get('days_remaining', 0) < 7:
-                        badge_color = "#ff9800"
-                        badge_text = "POR VENCER"
-                        bg_color = "#fff8e1"
-                    else:
-                        badge_color = "#4caf50"
-                        badge_text = "VIGENTE"
-                        bg_color = "#e8f5e9"
-                    
-                    # Determinar método de detección
-                    if fecha.get('ai_detected', False):
-                        method = "IA (Gemini)"
-                    elif fecha.get('manual_entry', False):
-                        method = "Entrada manual"
-                    else:
-                        method = "OCR (Tesseract)"
-                    
-                    # Mostrar tarjeta
-                    st.markdown(f"""
-                    <div style="background-color:{bg_color}; padding:15px; border-radius:5px; margin:10px 0; border-left:4px solid {badge_color};">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="background-color:{badge_color}; color:white; padding:3px 8px; border-radius:10px; font-size:0.8em; font-weight:bold;">{badge_text}</span>
-                            <span style="color:#666; font-size:0.8em;">Guardada: {fecha.get('timestamp', 'N/A')}</span>
-                        </div>
-                        <div style="margin-top:10px;"><strong>Fecha:</strong> {fecha.get('date_str', 'N/A')}</div>
-                        <div><strong>Método de detección:</strong> {method}</div>
-                        <div><strong>Días restantes:</strong> {fecha.get('days_remaining', 'N/A')}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-            
-            # Mostrar fechas vencidas
-            with fecha_tabs[1]:
-                if vencidas:
-                    for fecha in vencidas:
-                        days = abs(fecha.get('days_remaining', 0))
-                        days_text = "día" if days == 1 else "días"
-                        st.markdown(f"""
-                        <div style="background-color:#ffebee; padding:15px; border-radius:5px; margin:10px 0; border-left:4px solid #f44336;">
-                            <span style="background-color:#f44336; color:white; padding:3px 8px; border-radius:10px; font-size:0.8em; font-weight:bold;">VENCIDO</span>
-                            <div style="margin-top:10px;"><strong>Fecha:</strong> {fecha.get('date_str', 'N/A')}</div>
-                            <div><strong>Estado:</strong> Vencido hace {days} {days_text}</div>
-                            <div><strong>Guardada:</strong> {fecha.get('timestamp', 'N/A')}</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                else:
-                    st.info("No hay fechas vencidas guardadas.")
-            
-            # Mostrar fechas por vencer
-            with fecha_tabs[2]:
-                if por_vencer:
-                    for fecha in por_vencer:
-                        days = fecha.get('days_remaining', 0)
-                        days_text = "día" if days == 1 else "días"
-                        st.markdown(f"""
-                        <div style="background-color:#fff8e1; padding:15px; border-radius:5px; margin:10px 0; border-left:4px solid #ff9800;">
-                            <span style="background-color:#ff9800; color:white; padding:3px 8px; border-radius:10px; font-size:0.8em; font-weight:bold;">POR VENCER</span>
-                            <div style="margin-top:10px;"><strong>Fecha:</strong> {fecha.get('date_str', 'N/A')}</div>
-                            <div><strong>Estado:</strong> Vence en {days} {days_text}</div>
-                            <div><strong>Guardada:</strong> {fecha.get('timestamp', 'N/A')}</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                else:
-                    st.info("No hay fechas por vencer guardadas.")
-            
-            # Mostrar fechas vigentes
-            with fecha_tabs[3]:
-                if vigentes:
-                    for fecha in vigentes:
-                        days = fecha.get('days_remaining', 0)
-                        days_text = "día" if days == 1 else "días"
-                        st.markdown(f"""
-                        <div style="background-color:#e8f5e9; padding:15px; border-radius:5px; margin:10px 0; border-left:4px solid #4caf50;">
-                            <span style="background-color:#4caf50; color:white; padding:3px 8px; border-radius:10px; font-size:0.8em; font-weight:bold;">VIGENTE</span>
-                            <div style="margin-top:10px;"><strong>Fecha:</strong> {fecha.get('date_str', 'N/A')}</div>
-                            <div><strong>Estado:</strong> Válido por {days} {days_text} más</div>
-                            <div><strong>Guardada:</strong> {fecha.get('timestamp', 'N/A')}</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                else:
-                    st.info("No hay fechas vigentes guardadas.")
-                        
-        else:
-            st.info("No hay fechas de vencimiento guardadas todavía. Analiza alimentos en la herramienta principal y guarda las fechas detectadas para verlas aquí.")
+        finally:
+            # Eliminar el archivo temporal
+            try:
+                os.unlink(temp_filename)
+            except:
+                pass
     
-    with tabs[2]:
-        st.subheader("Contacto")
+    def about_page():
+        st.title("Sobre ¿Qué hay en tu plato?")
         st.markdown("""
-    Para cualquier consulta o sugerencia, no dudes en contactarnos:
-    """)
+        ¿Qué hay en tu plato? es una aplicación de análisis nutricional impulsada por inteligencia artificial que te permite:
     
-    contact_form = """
-    <form action="https://formsubmit.co/jriverabu@unal.edu.co" method="POST">
-        <input type="hidden" name="_captcha" value="false">
-        <input type="text" name="name" placeholder="Tu nombre" required>
-        <input type="email" name="email" placeholder="Tu email" required>
-        <textarea name="message" placeholder="Tu mensaje aquí"></textarea>
-        <button type="submit">Enviar</button>
-    </form>
-    """
-    st.markdown(contact_form, unsafe_allow_html=True)
+        - **Identificar alimentos** en imágenes con alta precisión
+        - **Calcular información nutricional** como calorías, proteínas, carbohidratos y grasas
+        - **Detectar el estado de los alimentos** para garantizar su seguridad alimentaria
+        - **Detectar fechas de vencimiento** y verificar si los productos están vencidos
+        - **Recibir recomendaciones personalizadas** para mejorar tus hábitos alimenticios
+        - **Visualizar datos** a través de gráficos interactivos
+        - **Exportar y guardar** tus análisis para seguimiento
     
-    with tabs[3]:
-        st.subheader("Enlaces a recursos nutricionales")
+        Esta aplicación utiliza el modelo Gemini de Google para proporcionar análisis precisos y recomendaciones personalizadas.
+    
+        ### Tecnologías utilizadas
+        - Streamlit para la interfaz de usuario
+        - Google Gemini para análisis de imágenes e información nutricional
+        - OpenCV para procesamiento de imágenes
+        - Altair y Pandas para visualización de datos
+        - Tesseract OCR (opcional) para detectar fechas de vencimiento
         
-        st.markdown("""
-        ### Enlaces a recursos nutricionales
+        ### Funcionalidad de detección del estado de los alimentos
         
-        - [Base de Datos Española de Composición de Alimentos (BEDCA)](https://www.bedca.net/)
-        - [USDA FoodData Central](https://fdc.nal.usda.gov/)
-        - [Organización Mundial de la Salud - Nutrición](https://www.who.int/es/health-topics/nutrition)
+        Nuestra aplicación ahora incluye una avanzada funcionalidad de detección del estado de los alimentos que:
         
-        ### Recursos sobre fechas de vencimiento
+        - Analiza visualmente cada alimento para detectar signos de deterioro
+        - Evalúa el color, textura y apariencia general
+        - Clasifica los alimentos en diferentes estados (Excelente, Bueno, Regular, Deteriorado)
+        - Proporciona recomendaciones específicas sobre el consumo seguro
+        - Ofrece guías educativas sobre cómo identificar alimentos en mal estado
         
-        - [AESAN - Agencia Española de Seguridad Alimentaria y Nutrición](https://www.aesan.gob.es/)
-        - [FDA - Cómo entender fechas en etiquetas de alimentos](https://www.fda.gov/consumers/consumer-updates/how-understand-and-use-nutrition-facts-label)
-        - [FAO - Manual para reducir el desperdicio de alimentos](http://www.fao.org/3/ca8646es/CA8646ES.pdf)
+        ### Detección de fechas de vencimiento
+        
+        La aplicación ahora cuenta con la capacidad de detectar fechas de vencimiento en los envases de alimentos:
+        
+        - Utiliza tecnología OCR (Reconocimiento Óptico de Caracteres) para leer texto de imágenes
+        - Identifica formatos comunes de fechas de vencimiento (DD/MM/AAAA, MM/DD/AA, etc.)
+        - Compara automáticamente con la fecha actual para determinar si un producto está vencido
+        - Proporciona alertas visuales para productos vencidos o próximos a vencer
+        - Ofrece recomendaciones específicas sobre cómo actuar cuando un producto está vencido
+        
+        > **Nota**: Esta funcionalidad requiere la biblioteca pytesseract y Tesseract OCR instalados en el sistema. Si no están disponibles, se usará una simulación para demostrar la funcionalidad.
         """)
+    
+    def contact_page():
+        st.title("Investigaciones y Recursos")
+        
+        # Crear pestañas para separar contenido
+        tabs = st.tabs(["Historial de Análisis", "Historial de Fechas", "Contacto", "Recursos"])
+        
+        with tabs[0]:
+        # Mostrar historial de análisis si existe
+        if 'historial_analisis' in st.session_state and st.session_state.historial_analisis:
+            st.subheader("Historial de Análisis")
+            
+            for i, analisis in enumerate(st.session_state.historial_analisis):
+                with st.expander(f"Análisis #{i+1} - {analisis['date']}"):
+                    st.write(f"ID: {analisis['id']}")
+                    st.write(f"Total calorías: {analisis['total_calories']} kcal")
+                    
+                    # Crear tabla de alimentos
+                    items_df = pd.DataFrame([{
+                        "Alimento": item["name"],
+                        "Calorías": item["nutrition"].get("total_calories", 0),
+                        "Proteínas (g)": item["nutrition"].get("protein_g", 0),
+                        "Carbohidratos (g)": item["nutrition"].get("carbs_g", 0),
+                        "Grasas (g)": item["nutrition"].get("fat_g", 0)
+                    } for item in analisis["items"]])
+                    
+                    st.dataframe(items_df)
+            else:
+                st.info("No hay análisis guardados todavía. Analiza alimentos en la herramienta principal y guarda los resultados para verlos aquí.")
+        
+        with tabs[1]:
+            st.subheader("Historial de Fechas de Vencimiento")
+            
+            # Mostrar fechas guardadas si existen
+            if 'fechas_guardadas' in st.session_state and st.session_state.fechas_guardadas:
+                # Agrupar por tipo (vencidas, por vencer, vigentes)
+                vencidas = [f for f in st.session_state.fechas_guardadas if f.get('is_expired', False)]
+                por_vencer = [f for f in st.session_state.fechas_guardadas if not f.get('is_expired', False) and f.get('days_remaining', 0) < 7]
+                vigentes = [f for f in st.session_state.fechas_guardadas if not f.get('is_expired', False) and f.get('days_remaining', 0) >= 7]
+                
+                # Crear pestañas para cada categoría
+                fecha_tabs = st.tabs(["Todas", f"Vencidas ({len(vencidas)})", f"Por vencer ({len(por_vencer)})", f"Vigentes ({len(vigentes)})"])
+                
+                with fecha_tabs[0]:
+                    st.markdown(f"### Total de fechas guardadas: {len(st.session_state.fechas_guardadas)}")
+                    
+                    # Botón para eliminar todo el historial
+                    if st.button("🗑️ Borrar todo el historial de fechas"):
+                        st.session_state.fechas_guardadas = []
+                        st.success("Historial borrado correctamente")
+                        st.experimental_rerun()
+                    
+                    # Mostrar todas las fechas
+                    for i, fecha in enumerate(st.session_state.fechas_guardadas):
+                        # Determinar color y estado
+                        if fecha.get('is_expired', False):
+                            badge_color = "#f44336"
+                            badge_text = "VENCIDO"
+                            bg_color = "#ffebee"
+                        elif fecha.get('days_remaining', 0) < 7:
+                            badge_color = "#ff9800"
+                            badge_text = "POR VENCER"
+                            bg_color = "#fff8e1"
+                        else:
+                            badge_color = "#4caf50"
+                            badge_text = "VIGENTE"
+                            bg_color = "#e8f5e9"
+                        
+                        # Determinar método de detección
+                        if fecha.get('ai_detected', False):
+                            method = "IA (Gemini)"
+                        elif fecha.get('manual_entry', False):
+                            method = "Entrada manual"
+                        else:
+                            method = "OCR (Tesseract)"
+                        
+                        # Mostrar tarjeta
+                        st.markdown(f"""
+                        <div style="background-color:{bg_color}; padding:15px; border-radius:5px; margin:10px 0; border-left:4px solid {badge_color};">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="background-color:{badge_color}; color:white; padding:3px 8px; border-radius:10px; font-size:0.8em; font-weight:bold;">{badge_text}</span>
+                                <span style="color:#666; font-size:0.8em;">Guardada: {fecha.get('timestamp', 'N/A')}</span>
+                            </div>
+                            <div style="margin-top:10px;"><strong>Fecha:</strong> {fecha.get('date_str', 'N/A')}</div>
+                            <div><strong>Método de detección:</strong> {method}</div>
+                            <div><strong>Días restantes:</strong> {fecha.get('days_remaining', 'N/A')}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                
+                # Mostrar fechas vencidas
+                with fecha_tabs[1]:
+                    if vencidas:
+                        for fecha in vencidas:
+                            days = abs(fecha.get('days_remaining', 0))
+                            days_text = "día" if days == 1 else "días"
+                            st.markdown(f"""
+                            <div style="background-color:#ffebee; padding:15px; border-radius:5px; margin:10px 0; border-left:4px solid #f44336;">
+                                <span style="background-color:#f44336; color:white; padding:3px 8px; border-radius:10px; font-size:0.8em; font-weight:bold;">VENCIDO</span>
+                                <div style="margin-top:10px;"><strong>Fecha:</strong> {fecha.get('date_str', 'N/A')}</div>
+                                <div><strong>Estado:</strong> Vencido hace {days} {days_text}</div>
+                                <div><strong>Guardada:</strong> {fecha.get('timestamp', 'N/A')}</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    else:
+                        st.info("No hay fechas vencidas guardadas.")
+                
+                # Mostrar fechas por vencer
+                with fecha_tabs[2]:
+                    if por_vencer:
+                        for fecha in por_vencer:
+                            days = fecha.get('days_remaining', 0)
+                            days_text = "día" if days == 1 else "días"
+                            st.markdown(f"""
+                            <div style="background-color:#fff8e1; padding:15px; border-radius:5px; margin:10px 0; border-left:4px solid #ff9800;">
+                                <span style="background-color:#ff9800; color:white; padding:3px 8px; border-radius:10px; font-size:0.8em; font-weight:bold;">POR VENCER</span>
+                                <div style="margin-top:10px;"><strong>Fecha:</strong> {fecha.get('date_str', 'N/A')}</div>
+                                <div><strong>Estado:</strong> Vence en {days} {days_text}</div>
+                                <div><strong>Guardada:</strong> {fecha.get('timestamp', 'N/A')}</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    else:
+                        st.info("No hay fechas por vencer guardadas.")
+                
+                # Mostrar fechas vigentes
+                with fecha_tabs[3]:
+                    if vigentes:
+                        for fecha in vigentes:
+                            days = fecha.get('days_remaining', 0)
+                            days_text = "día" if days == 1 else "días"
+                            st.markdown(f"""
+                            <div style="background-color:#e8f5e9; padding:15px; border-radius:5px; margin:10px 0; border-left:4px solid #4caf50;">
+                                <span style="background-color:#4caf50; color:white; padding:3px 8px; border-radius:10px; font-size:0.8em; font-weight:bold;">VIGENTE</span>
+                                <div style="margin-top:10px;"><strong>Fecha:</strong> {fecha.get('date_str', 'N/A')}</div>
+                                <div><strong>Estado:</strong> Válido por {days} {days_text} más</div>
+                                <div><strong>Guardada:</strong> {fecha.get('timestamp', 'N/A')}</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    else:
+                        st.info("No hay fechas vigentes guardadas.")
+                            
+            else:
+                st.info("No hay fechas de vencimiento guardadas todavía. Analiza alimentos en la herramienta principal y guarda las fechas detectadas para verlas aquí.")
+        
+        with tabs[2]:
+            st.subheader("Contacto")
+            st.markdown("""
+        Para cualquier consulta o sugerencia, no dudes en contactarnos:
+        """)
+        
+        contact_form = """
+        <form action="https://formsubmit.co/jriverabu@unal.edu.co" method="POST">
+            <input type="hidden" name="_captcha" value="false">
+            <input type="text" name="name" placeholder="Tu nombre" required>
+            <input type="email" name="email" placeholder="Tu email" required>
+            <textarea name="message" placeholder="Tu mensaje aquí"></textarea>
+            <button type="submit">Enviar</button>
+        </form>
+        """
+        st.markdown(contact_form, unsafe_allow_html=True)
+        
+        with tabs[3]:
+            st.subheader("Enlaces a recursos nutricionales")
+            
+            st.markdown("""
+            ### Enlaces a recursos nutricionales
+            
+            - [Base de Datos Española de Composición de Alimentos (BEDCA)](https://www.bedca.net/)
+            - [USDA FoodData Central](https://fdc.nal.usda.gov/)
+            - [Organización Mundial de la Salud - Nutrición](https://www.who.int/es/health-topics/nutrition)
+            
+            ### Recursos sobre fechas de vencimiento
+            
+            - [AESAN - Agencia Española de Seguridad Alimentaria y Nutrición](https://www.aesan.gob.es/)
+            - [FDA - Cómo entender fechas en etiquetas de alimentos](https://www.fda.gov/consumers/consumer-updates/how-understand-and-use-nutrition-facts-label)
+            - [FAO - Manual para reducir el desperdicio de alimentos](http://www.fao.org/3/ca8646es/CA8646ES.pdf)
+            """)
 
 if __name__ == "__main__":
     main()
