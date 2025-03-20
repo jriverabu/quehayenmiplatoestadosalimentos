@@ -1361,7 +1361,7 @@ def process_image(img_file):
                 
                 # Implementar análisis real del estado con Gemini
                 try:
-                            prompt_text ="""Analiza esta imagen de comida y evalúa el estado y calidad de cada alimento visible.
+                    prompt_text ="""Analiza esta imagen de comida y evalúa el estado y calidad de cada alimento visible.
                             Para cada alimento:
                             1. Identifica su nombre
                             2. Evalúa su estado (Excelente, Bueno, Regular o Deteriorado)
