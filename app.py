@@ -1375,7 +1375,8 @@ def process_image(img_file):
                     5. Determina el nivel de cocción (Crudo, Parcialmente cocinado, Completamente cocinado)
                     6. Indica si es seguro consumirlo en su nivel actual de cocción
                     """    
-                    prompt_text += """   
+                    # Prepara el formato JSON base
+                    prompt_text += """
                     Responde SOLO con un objeto JSON con el siguiente formato (sin texto adicional):
                     [
                         {
@@ -1383,18 +1384,19 @@ def process_image(img_file):
                             "estado": "Excelente/Bueno/Regular/Deteriorado",
                             "detalles": "descripción_detallada_visual",
                             "confianza": valor_entre_0_y_1,
-                            "recomendaciones": "recomendación_sobre_consumo"
+                            "recomendaciones": "recomendación_sobre_consumo" """
                     
-                    # Añadir campos adicionales para el nivel de cocción
+                    # Añade los campos de cocción si es necesario
                     if cooking_status:
                         prompt_text += """,
                             "nivel_coccion": "Crudo/Parcialmente cocinado/Completamente cocinado",
                             "seguro_consumo": true/false,
-                            "tiempo_coccion_recomendado": "tiempo adicional recomendado (solo si aplica)"
-                        """
+                            "tiempo_coccion_recomendado": "tiempo adicional recomendado (solo si aplica)" """
+                    
+                    # Cierra el objeto JSON
                     prompt_text += """
                         },
-                            ...
+                        ...
                     ]"""
                         
                     # Crear mensaje para Gemini
