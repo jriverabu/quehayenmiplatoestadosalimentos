@@ -1376,21 +1376,22 @@ def process_image(img_file):
                     6. Indica si es seguro consumirlo en su nivel actual de cocción
                         """    
                     prompt_text += """   
-                            Responde SOLO con un objeto JSON con el siguiente formato (sin texto adicional):
-                            [
-                              {
-                                "alimento": "nombre_del_alimento",
-                                "estado": "Excelente/Bueno/Regular/Deteriorado",
-                                "detalles": "descripción_detallada_visual",
-                                "confianza": valor_entre_0_y_1,
-                                "recomendaciones": "recomendación_sobre_consumo"
-                              # Añadir campos adicionales para el nivel de cocción
+                    Responde SOLO con un objeto JSON con el siguiente formato (sin texto adicional):
+                    [
+                        {
+                            "alimento": "nombre_del_alimento",
+                            "estado": "Excelente/Bueno/Regular/Deteriorado",
+                            "detalles": "descripción_detallada_visual",
+                            "confianza": valor_entre_0_y_1,
+                            "recomendaciones": "recomendación_sobre_consumo"
+                    
+                    # Añadir campos adicionales para el nivel de cocción
                     if cooking_status:
-                        prompt_text += """,
-                        "nivel_coccion": "Crudo/Parcialmente cocinado/Completamente cocinado",
-                        "seguro_consumo": true/false,
-                        "tiempo_coccion_recomendado": "tiempo adicional recomendado (solo si aplica)"
-                        """
+                            prompt_text += """,
+                            "nivel_coccion": "Crudo/Parcialmente cocinado/Completamente cocinado",
+                            "seguro_consumo": true/false,
+                            "tiempo_coccion_recomendado": "tiempo adicional recomendado (solo si aplica)"
+                            """
                     prompt_text += """
                       },
                       ...
