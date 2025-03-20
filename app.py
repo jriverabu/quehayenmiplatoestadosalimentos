@@ -1394,13 +1394,20 @@ def process_image(img_file):
                         "seguro_consumo": true/false,
                         "tiempo_coccion_recomendado": "tiempo adicional recomendado (solo si aplica)"
                         """
-                              
-                              },
-                              ...
-                            ]"""),
+                    prompt_text += """
+                      },
+                      ...
+                    ]"""
+                    
+                    # Crear mensaje para Gemini
+                    food_condition_msg = ChatMessage(
+                        role=MessageRole.USER,
+                        blocks=[
+                            TextBlock(text=prompt_text),
                             ImageBlock(path=temp_filename, image_mimetype="image/jpeg"),
                         ],
                     )
+                    
                     
                     # Obtener respuesta de Gemini
                     condition_response = gemini_pro.chat(messages=[food_condition_msg])
