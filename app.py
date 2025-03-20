@@ -1371,7 +1371,7 @@ def process_image(img_file):
 
                             # Añadir instrucciones para detectar nivel de cocción si está activado
                     if cooking_status:
-                        prompt_text += """
+                            prompt_text += """
                     5. Determina el nivel de cocción (Crudo, Parcialmente cocinado, Completamente cocinado)
                     6. Indica si es seguro consumirlo en su nivel actual de cocción
                         """    
