@@ -1374,7 +1374,7 @@ def process_image(img_file):
                             prompt_text += """
                     5. Determina el nivel de cocción (Crudo, Parcialmente cocinado, Completamente cocinado)
                     6. Indica si es seguro consumirlo en su nivel actual de cocción
-                        """    
+                    """    
                     prompt_text += """   
                     Responde SOLO con un objeto JSON con el siguiente formato (sin texto adicional):
                     [
@@ -1388,15 +1388,15 @@ def process_image(img_file):
                     # Añadir campos adicionales para el nivel de cocción
                     if cooking_status:
                     prompt_text += """,
-                    "nivel_coccion": "Crudo/Parcialmente cocinado/Completamente cocinado",
-                    "seguro_consumo": true/false,
-                    "tiempo_coccion_recomendado": "tiempo adicional recomendado (solo si aplica)"
+                            "nivel_coccion": "Crudo/Parcialmente cocinado/Completamente cocinado",
+                            "seguro_consumo": true/false,
+                            "tiempo_coccion_recomendado": "tiempo adicional recomendado (solo si aplica)"
                     """
                     prompt_text += """
-                    },
-                        ...
-                    ]"""
-                    
+                        },
+                            ...
+                        ]"""
+                        
                     # Crear mensaje para Gemini
                     food_condition_msg = ChatMessage(
                         role=MessageRole.USER,
